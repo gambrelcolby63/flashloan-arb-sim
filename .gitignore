@@ -1,0 +1,29 @@
+# build
+cache/
+out/
+broadcast/
+/lib/forge-std/.git
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+*.key
+keystore/
+
+# python
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.mypy_cache/
+
+# local chain
+anvil.log
+anvil.pid
+broadcast/
+
+# editor
+.idea/
+.vscode/
+*.swp

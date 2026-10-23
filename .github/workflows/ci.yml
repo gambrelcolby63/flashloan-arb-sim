@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Solidity unit tests
+        run: forge test --no-match-path 'test/fork/*'
+      - name: Python tests
+        run: |
+          pip install -r requirements.txt
+          PYTHONPATH=bot python -m pytest -q
+
+  fork:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.6
+      - name: Fork tests (skip when the pinned block is gone)
+        run: bash scripts/ci-fork-tests.sh
