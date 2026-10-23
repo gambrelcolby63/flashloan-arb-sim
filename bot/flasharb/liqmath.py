@@ -125,6 +125,72 @@ def median(values: list[float | int]) -> float | None:
     return (float(xs[mid - 1]) + float(xs[mid])) / 2.0
 
 
+# Loan-size buckets in USD. The right edge is exclusive, except the last bucket.
+LOAN_SIZE_BUCKETS: tuple[tuple[float, float | None, str], ...] = (
+    (0, 100, "under_100"),
+    (100, 1_000, "100_to_1k"),
+    (1_000, 10_000, "1k_to_10k"),
+    (10_000, 100_000, "10k_to_100k"),
+    (100_000, 1_000_000, "100k_to_1m"),
+    (1_000_000, None, "at_least_1m"),
+)
+
+
+def quantile(values: list[float | int], q: float) -> float | None:
+    """Linear quantile on a copy. q=0.5 matches `median` for both even and odd lengths."""
+    if not 0 <= q <= 1:
+        raise ValueError("q out of range")
+    xs = sorted(float(value) for value in values)
+    n = len(xs)
+    if n == 0:
+        return None
+    if n == 1:
+        return xs[0]
+    pos = q * (n - 1)
+    lo = int(pos)
+    hi = min(lo + 1, n - 1)
+    frac = pos - lo
+    return xs[lo] * (1 - frac) + xs[hi] * frac
+
+
+def size_summary(values: list[float | int]) -> dict:
+    """Average, median, and bucket counts. Empty input stays None, not zero."""
+    xs = sorted(float(value) for value in values)
+    distribution = {name: 0 for _, _, name in LOAN_SIZE_BUCKETS}
+    below_zero = 0
+    for value in xs:
+        if value < 0:
+            below_zero += 1
+            continue
+        for low, high, name in LOAN_SIZE_BUCKETS:
+            if value >= low and (high is None or value < high):
+                distribution[name] += 1
+                break
+    if not xs:
+        return {
+            "n": 0,
+            "average": None,
+            "median": None,
+            "min": None,
+            "max": None,
+            "p25": None,
+            "p75": None,
+            "below_zero": 0,
+            "distribution": distribution,
+        }
+    return {
+        "n": len(xs),
+        "average": sum(xs) / len(xs),
+        "median": median(xs),
+        "min": xs[0],
+        "max": xs[-1],
+        "p25": quantile(xs, 0.25),
+        "p75": quantile(xs, 0.75),
+        "below_zero": below_zero,
+        "distribution": distribution,
+    }
+
+
 def concentration(liquidator_counts: dict[str, int], liquidator_bonus: dict[str, float], repeat_min: int = REPEAT_LIQUIDATOR_MIN) -> dict:
     """Share of liquidations and of positive bonus held by the busiest addresses."""
     total = sum(liquidator_counts.values())

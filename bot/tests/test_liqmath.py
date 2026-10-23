@@ -1,15 +1,18 @@
 from flasharb.liquidations import TOPIC_AAVE_LIQUIDATION, TOPIC_EULER_LIQUIDATE, TOPIC_LIQUIDATE_BORROW, TOPIC_SILO_LIQUIDATION
+from flasharb.liquidations import build_loan_sizes
 from flasharb.liqmath import (
     bonus_usd,
     concentration,
     is_unhealthy,
     lif_wad,
     max_borrow_assets,
+    median,
     position_borrowed,
+    quantile,
+    size_summary,
     slowly_captured,
     take_size,
     taylor_interest,
-    median,
 )
 
 
@@ -103,3 +106,115 @@ def test_slowly_captured_excludes_unknown_and_fast_races():
     assert report["missing_gas_or_fee"] == 1
     assert report["positive_net_events"] == 2
     assert report["positive_net_before_slippage_usd"] == (20.0 - 2.0) + (5.0 - 1.0)
+
+
+def test_size_summary_buckets_match_median():
+    summary = size_summary([50, 100, 999.99, 1000, 1_000_000])
+    assert summary["n"] == 5
+    assert summary["average"] == (50 + 100 + 999.99 + 1000 + 1_000_000) / 5
+    assert summary["median"] == median([50, 100, 999.99, 1000, 1_000_000])
+    assert summary["median"] == quantile([50, 100, 999.99, 1000, 1_000_000], 0.5)
+    assert summary["distribution"] == {
+        "under_100": 1,
+        "100_to_1k": 2,
+        "1k_to_10k": 1,
+        "10k_to_100k": 0,
+        "100k_to_1m": 0,
+        "at_least_1m": 1,
+    }
+    assert size_summary([])["average"] is None
+    assert size_summary([])["median"] is None
+    assert quantile([1, 2, 3, 4], 0.5) == 2.5
+
+
+def test_loan_sizes_keep_every_row_and_split_markets():
+    market_a = "0x" + "aa" * 32
+    market_b = "0x" + "bb" * 32
+    events = [
+        {
+            "protocol": "morpho-blue",
+            "chain": "base",
+            "market_id": market_a,
+            "collateral_symbol": "AERO",
+            "loan_symbol": "USDC",
+            "tx": "0x1",
+            "block": 1,
+            "repaid_usd": 40.0,
+            "seized_usd": 42.0,
+            "bonus_source": "daily_morpho_price",
+        },
+        {
+            "protocol": "morpho-blue",
+            "chain": "base",
+            "market_id": market_a,
+            "collateral_symbol": "AERO",
+            "loan_symbol": "USDC",
+            "tx": "0x2",
+            "block": 2,
+            "repaid_usd": None,
+            "seized_usd": None,
+            "bonus_source": "daily_morpho_price",
+        },
+        {
+            "protocol": "euler-v2",
+            "chain": "mainnet",
+            "market_id": market_b,
+            "collateral_symbol": "WETH",
+            "loan_symbol": "USDC",
+            "tx": "0x3",
+            "block": 3,
+            "repaid_usd": 1500.0,
+            "seized_usd": 1600.0,
+            "bonus_source": "euler-api",
+        },
+    ]
+    positions = [
+        {
+            "kind": "underwater",
+            "chain": "mainnet",
+            "market_id": market_b,
+            "borrower": "0x" + "11" * 20,
+            "collateral_symbol": "WETH",
+            "loan_symbol": "USDC",
+            "health_factor": 0.9,
+            "borrow_usd": 80.0,
+            "collateral_usd": 70.0,
+        },
+        {
+            "kind": "near",
+            "chain": "mainnet",
+            "market_id": market_b,
+            "borrower": "0x" + "22" * 20,
+            "health_factor": 1.01,
+            "borrow_usd": 9_000.0,
+            "collateral_usd": 9_500.0,
+        },
+        {
+            "kind": "underwater",
+            "chain": "base",
+            "market_id": market_a,
+            "borrower": "0x" + "33" * 20,
+            "health_factor": 1.2,
+            "borrow_usd": 500.0,
+            "collateral_usd": 400.0,
+        },
+    ]
+    report = build_loan_sizes(events, positions)
+    observed = report["observed_liquidations"]
+    assert observed["n"] == 3
+    assert len(observed["records"]) == 3
+    assert observed["debt_priced"] == 2
+    assert observed["debt_unpriced"] == 1
+    assert observed["debt_usd"]["average"] == (40.0 + 1500.0) / 2
+    assert len(observed["by_market"]) == 2
+    aero = next(row for row in observed["by_market"] if row["collateral"] == "AERO")
+    assert aero["n"] == 2
+    assert aero["debt_usd"]["n"] == 1
+    assert aero["debt_usd"]["distribution"]["under_100"] == 1
+    assert aero["collateral_usd"]["average"] == 42.0
+    positions_out = report["liquidatable_positions"]
+    assert positions_out["n"] == 1
+    assert positions_out["records"][0]["debt_outstanding_usd"] == 80.0
+    assert positions_out["records"][0]["collateral_balance_usd"] == 70.0
+    assert report["liquidatable_debt_at_least_50"]["n"] == 1
+    assert report["liquidatable_debt_at_least_50"]["average"] == 80.0

@@ -28,6 +28,7 @@ from flasharb.liqmath import (
     is_unhealthy,
     median,
     position_borrowed,
+    size_summary,
     slowly_captured,
     take_size,
     usd,
@@ -1401,6 +1402,151 @@ def _delay_slice(events: list[dict]) -> dict:
     }
 
 
+def _market_key(row: dict) -> tuple[str, str, str]:
+    return (
+        row.get("protocol") or "unknown",
+        row.get("chain") or "unknown",
+        (row.get("market_id") or "unknown").lower(),
+    )
+
+
+def _fill_label(current: str | None, new: str | None) -> str | None:
+    return current or new
+
+
+def build_loan_sizes(events: list[dict], positions: list[dict]) -> dict:
+    """Debt and collateral USD for every observed liquidation and every liquidatable position.
+
+    Loan size is debt. For a liquidation that is the debt repaid in that event, which can
+    be a partial repay. For an open position it is the outstanding borrow, not a completed
+    repay. Collateral on an open position is the balance, not a seize. Missing prices are
+    counted and left out of the average.
+    """
+    observed = []
+    for event in events:
+        if event.get("protocol") not in {"morpho-blue", "euler-v2"}:
+            continue
+        observed.append({
+            "kind": "observed_liquidation",
+            "protocol": event.get("protocol"),
+            "chain": event.get("chain"),
+            "market_id": event.get("market_id"),
+            "collateral": event.get("collateral_symbol"),
+            "loan": event.get("loan_symbol"),
+            "tx": event.get("tx"),
+            "block": event.get("block"),
+            "debt_repaid_usd": event.get("repaid_usd"),
+            "collateral_seized_usd": event.get("seized_usd"),
+            "price_source": event.get("bonus_source"),
+        })
+    liquidatable = []
+    for row in positions:
+        if row.get("kind") not in {None, "underwater"}:
+            continue
+        health = row.get("health_factor")
+        try:
+            health_value = float(health) if health is not None else None
+        except (TypeError, ValueError):
+            health_value = None
+        if health_value is not None and health_value > 1:
+            continue
+        liquidatable.append({
+            "kind": "liquidatable_position",
+            "protocol": "morpho-blue",
+            "chain": row.get("chain"),
+            "market_id": row.get("market_id"),
+            "borrower": row.get("borrower"),
+            "collateral": row.get("collateral_symbol"),
+            "loan": row.get("loan_symbol"),
+            "health_factor": health_value,
+            "debt_outstanding_usd": row.get("borrow_usd"),
+            "collateral_balance_usd": row.get("collateral_usd"),
+            "price_source": "morpho_indexer",
+        })
+    observed_pack = _pack_sizes(observed, "debt_repaid_usd", "collateral_seized_usd")
+    position_pack = _pack_sizes(liquidatable, "debt_outstanding_usd", "collateral_balance_usd")
+    large_positions = [
+        row["debt_outstanding_usd"]
+        for row in liquidatable
+        if row.get("debt_outstanding_usd") is not None and row["debt_outstanding_usd"] >= 50
+    ]
+    return {
+        "loan_size_is": "debt in USD. Observed rows use debt repaid. Open rows use outstanding borrow.",
+        "collateral_is": "Collateral seized for an observed liquidation. Collateral balance for an open position, which is not a seize.",
+        "buckets_usd": {
+            "under_100": "[0, 100)",
+            "100_to_1k": "[100, 1000)",
+            "1k_to_10k": "[1000, 10000)",
+            "10k_to_100k": "[10000, 100000)",
+            "100k_to_1m": "[100000, 1000000)",
+            "at_least_1m": "[1000000, inf)",
+        },
+        "observed_liquidations": observed_pack,
+        "liquidatable_positions": position_pack,
+        "liquidatable_debt_at_least_50": size_summary(large_positions),
+        "not_in_this_table": (
+            "Moonwell's 142 LiquidateBorrow logs were not retained per event, so they have no "
+            "per-market distribution. Seamless, Fluid, and the one Silo contract had zero events "
+            "in their short windows. Near-threshold positions with health factor above 1 are not liquidatable."
+        ),
+    }
+
+
+def _pack_sizes(rows: list[dict], debt_key: str, collateral_key: str) -> dict:
+    grouped: dict[tuple[str, str, str], dict] = {}
+    for row in rows:
+        key = _market_key(row)
+        bucket = grouped.get(key)
+        if bucket is None:
+            bucket = {
+                "protocol": key[0],
+                "chain": key[1],
+                "market_id": row.get("market_id"),
+                "collateral": row.get("collateral"),
+                "loan": row.get("loan"),
+                "rows": [],
+            }
+            grouped[key] = bucket
+        bucket["collateral"] = _fill_label(bucket["collateral"], row.get("collateral"))
+        bucket["loan"] = _fill_label(bucket["loan"], row.get("loan"))
+        bucket["rows"].append(row)
+    markets = []
+    for bucket in grouped.values():
+        debts = [row[debt_key] for row in bucket["rows"] if row.get(debt_key) is not None]
+        collateral = [row[collateral_key] for row in bucket["rows"] if row.get(collateral_key) is not None]
+        markets.append({
+            "protocol": bucket["protocol"],
+            "chain": bucket["chain"],
+            "market_id": bucket["market_id"],
+            "collateral": bucket["collateral"],
+            "loan": bucket["loan"],
+            "n": len(bucket["rows"]),
+            "debt_priced": len(debts),
+            "debt_unpriced": len(bucket["rows"]) - len(debts),
+            "collateral_priced": len(collateral),
+            "collateral_unpriced": len(bucket["rows"]) - len(collateral),
+            "debt_usd": size_summary(debts),
+            "collateral_usd": size_summary(collateral),
+        })
+    markets.sort(key=lambda item: (-item["n"], item["protocol"], item["chain"], item["market_id"] or ""))
+    debts = [row[debt_key] for row in rows if row.get(debt_key) is not None]
+    collateral = [row[collateral_key] for row in rows if row.get(collateral_key) is not None]
+    return {
+        "n": len(rows),
+        "debt_priced": len(debts),
+        "debt_unpriced": len(rows) - len(debts),
+        "collateral_priced": len(collateral),
+        "collateral_unpriced": len(rows) - len(collateral),
+        "debt_usd": size_summary(debts),
+        "collateral_usd": size_summary(collateral),
+        "by_market": markets,
+        "records": [
+            {key: value for key, value in row.items() if value is not None}
+            for row in rows
+        ],
+    }
+
+
 def _group_bonus(events: list[dict]) -> dict[str, dict]:
     groups: dict[str, dict] = {}
     for event in events:
@@ -1495,6 +1641,7 @@ def build_report(
             "euler_positive_bonus_usd": _positive_sum(euler),
         },
         "by_market": _group_bonus(all_events),
+        "loan_sizes": build_loan_sizes(all_events, open_meta.get("underwater") or []),
         "delay": {
             "sample_events": len(sample),
             "measured_events": len(delays),
@@ -1611,6 +1758,7 @@ def build_report(
             "slippage_historical": "Not reconstructed, except the one Aerodrome quote recorded in config/liquidation-fork.json.",
             "flash_fee": "Zero only if the latest Morpho Blue or Balancer V2 balance covers the repaid amount.",
             "logs": "Moonwell and Seamless on Base were scanned for about 2 days (blocks 52908363-52994763). The Fluid Base liquidator was scanned for about 14 days (blocks 52389963-52994763). Silo on Arbitrum was one contract for about 2 days (blocks 516917727-517608927). Not 90 days.",
+            "loan_size": "Per market, debt repaid and collateral seized for every priced Morpho and Euler liquidation, and outstanding debt plus collateral balance for every indexer position with health factor at or under 1. Unpriced rows are counted and omitted from the average. Moonwell events were not retained per market.",
             "no_live_sends": True,
         },
     }
