@@ -1,0 +1,6 @@
+{
+  "comment": "Pinned blocks used by forge fork tests. Public RPCs only keep recent state; CI skips a chain when this block is no longer available.",
+  "mainnet": 26252880,
+  "base": 52969900,
+  "arbitrum": 517431000
+}

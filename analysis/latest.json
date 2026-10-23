@@ -1,0 +1,1619 @@
+{
+  "methodology": "An opportunity opens when one transaction moves a two-pool cycle from not-profitable to profitable after the flash premium, DEX fee, and a gas cushion (max base fee of the window endpoints, plus the chain's L1/Timeboost dollar cushion). It is captured only if a later transaction in the same block or the next block touches both pools and the profit goes to zero or below. A spread that dies without such a two-pool transaction is ambiguous. A spread still profitable at the end of the next block is uncaptured and counted once. Edges above the suspect threshold are dropped. Dust TVL (either pool under the long-tail minimum) is not counted. This is not a live trading result.",
+  "chains": [
+    {
+      "chain": "base",
+      "rpc": "https://mainnet.base.org",
+      "start_block": 52970045,
+      "end_block": 52971845,
+      "blocks": 1800,
+      "base_fee_wei_max": 5000000,
+      "base_fee_gwei_max": 0.005,
+      "weth_usd": 2407.22,
+      "token_prices_usd": {
+        "USDC": 1.0,
+        "USDbC": 1.0,
+        "DAI": 1.0,
+        "WETH": 2407.21988,
+        "AERO": 0.792739,
+        "cbETH": 2748.700415,
+        "wstETH": 2992.376406,
+        "DEGEN": 0.000961,
+        "BRETT": 0.004842,
+        "TOSHI": 0.000112,
+        "cbBTC": 81662.72498,
+        "EURC": 1.121647,
+        "VIRTUAL": 0.660821,
+        "WELL": 0.002152
+      },
+      "extra_l1_fee_usd": 0.03,
+      "pools_discovered": 116,
+      "pools_trusted": 115,
+      "pools_replay_mismatch": 1,
+      "trusted_kinds": {
+        "univ2": 11,
+        "solidly_volatile": 27,
+        "solidly_stable": 11,
+        "univ3": 60,
+        "slipstream": 6
+      },
+      "cycles": 410,
+      "logs": 3775,
+      "txs_touching_pools": 3636,
+      "suspect_keys": 0,
+      "spot_screen_passes": 18837,
+      "positive_before_gas_only": 11750,
+      "max_spot_edge_bps": 380.46,
+      "quote_checks": {
+        "checked": [
+          {
+            "dex": "baseswap",
+            "kind": "univ2",
+            "local": 2401082,
+            "chain": 2401082,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0xcdac0d6c6c59727a65f871236188350531885c43",
+            "local": 2139652609,
+            "chain": 2139652609,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x3548029694fbb241d45fb24ba0cd9c9d4e745f16",
+            "local": 4996619,
+            "chain": 4996619,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0xb4885bc63399bf5518b994c1d0c153334ee579d0",
+            "local": 59873390,
+            "chain": 59873390,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x44d7dd237001aef7fc7d8cb13ab4452f65ce5e40",
+            "local": 542041,
+            "chain": 542041,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x9287c921f5d920ceee0d07d7c58d476e46acc640",
+            "local": 598645275141721376,
+            "chain": 598645275141721376,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0xc078e01b31a3db4af0ed218c028c32bcefc00a40",
+            "local": 30388129120608835,
+            "chain": 30388129120608809,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x44ecc644449fc3a9858d2007caa8cfaa4c561f91",
+            "local": 26964199662767942,
+            "chain": 26964199662767942,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x9e8bfeb5c73f3f897bebdb49cc4161fece0b0c55",
+            "local": 443206890518099,
+            "chain": 443206890518100,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0xa6385c73961dd9c58db2ef0c4eb98ce4b60651e8",
+            "local": 135429041233875003,
+            "chain": 135429041233875003,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x29bbb5f85f01702ec85d217ceeb2d9657700cf04",
+            "local": 244237539665036,
+            "chain": 244237539665036,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x7f670f78b17dec44d5ef68a48740b6f8849cc2e6",
+            "local": 1417272906296711587893,
+            "chain": 1417272906296711587893,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x80abe24a3ef1fc593ac5da960f232ca23b2069d0",
+            "local": 791117510880577105,
+            "chain": 791117510880577104,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x2c4909355b0c036840819484c3a882a95659abf3",
+            "local": 14375349878865139629191,
+            "chain": 14375349878865139629191,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0xd64a19ba768ff2b911af217b0c325cf745d61432",
+            "local": 36248327634453431875,
+            "chain": 36248327634453431861,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x214356cc4aab907244a791ca9735292860490d5a",
+            "local": 736951449462222486,
+            "chain": 736951449462222486,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x081e4455d91726212d1fa9affee80637d1f7be8e",
+            "local": 378537172123669886276,
+            "chain": 378537172123669886276,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x2f74e24335b3280d9d5dbaa711166679282b4288",
+            "local": 335500642138278986,
+            "chain": 0,
+            "ok": false
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x21594b992f68495dd28d605834b58889d0a727c7",
+            "local": 704447531335693156,
+            "chain": 704447531335693156,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x5358a89a2b61ae92f5c519018dd9ae427eb38026",
+            "local": 2540333903364,
+            "chain": 2540333903363,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x2578365b3dfa7ffe60108e181efb79feddec2319",
+            "local": 426044,
+            "chain": 426044,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x9dff4b5ae4fd673213502ab8fbf6d36015efb3e1",
+            "local": 3589208,
+            "chain": 3589208,
+            "ok": true
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "pool": "0x88b75df1539e3ef2adb99acaec005b6810578a81",
+            "local": 0,
+            "chain": 0,
+            "ok": false
+          },
+          {
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "pool": "0x89d0f320ac73dd7d9513ffc5bc58d1161452a657",
+            "local": 266739016883703983243686,
+            "chain": 266739016883703983243686,
+            "ok": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xb4cb800910b228ed3d0834cf79d697127bbb00e5",
+            "local": 141477589,
+            "chain": 370151738,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xd0b53d9277642d899df5c87a3966a349a798f224",
+            "local": 2402394950,
+            "chain": 2402394950,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x6c561b446416e1a00e8e93e221854d6ea4171372",
+            "local": 2399995214,
+            "chain": 2399995214,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x0b1c2dcbbfa744ebd3fc17ff1a96a1e1eb4b2d69",
+            "local": 353004736,
+            "chain": 353004736,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x3b8000cd10625abdc7370fb47ed4d4a9c6311fd5",
+            "local": 89452,
+            "chain": 280180,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x4c36388be6f416a29c8d8eee81c771ce6be14b18",
+            "local": 8206800,
+            "chain": 8206800,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x3ddf264ac95d19e81f8c25f4c300c4e59e424d43",
+            "local": 851571,
+            "chain": 851571,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xe584fe0c7505025c3819c82c99944b79a7cc009d",
+            "local": 37994,
+            "chain": 37994,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x751864805accc54ce46e09fb7f6c46c907ac8590",
+            "local": 85138334575215,
+            "chain": 451980048100239,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x93e8542e6ca0efffb9d57a270b76712b968a38f5",
+            "local": 51497541499984313,
+            "chain": 51734342661395918,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xdcf81663e68f076ef9763442de134fd0699de4ef",
+            "local": 339965726357355655,
+            "chain": 339965726357355655,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x48ad1e2e7c447f6814e69aefe3f0203a0cc128af",
+            "local": 1077240745145790,
+            "chain": 1077240745145790,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xa9dafa443a02fbc907cb0093276b3e6f4ef02a46",
+            "local": 1142112351320883576,
+            "chain": 1142112351320883576,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x10648ba41b8565907cfa1496765fa4d95390aa0d",
+            "local": 97652080981852083,
+            "chain": 97652080981852083,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x7b9636266734270de5be02544c04e27046903ff8",
+            "local": 213861133575258,
+            "chain": 213861133575258,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x6fb974dcea795d10ade524bcc3fc9e3e9d29ea87",
+            "local": 2356642046357,
+            "chain": 2356642046357,
+            "ok": true,
+            "exact": true
+          }
+        ],
+        "failed": [
+          {
+            "pool": "0x2f74e24335b3280d9d5dbaa711166679282b4288",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=335500642138278986 chain=0"
+          },
+          {
+            "pool": "0x88b75df1539e3ef2adb99acaec005b6810578a81",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0xe09ad3c607a1afd47aea76bb337644a7be9be6fa",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0xd15810d4298a9b53421988aa14637838ed4049b0",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=208899823090313733 chain=0"
+          },
+          {
+            "pool": "0xd420e3c55c4fbca030743d83d0df1d7764a85435",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0xc0734f84e402d69a445d93c60ad2c72258f159b6",
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "reason": "solidly_volatile getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0x008db1479f14f39f756486ab6131a879704ff6ef",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0x51cd2d2ef416b024ed6ba6d3a2343d4aa81c5aa0",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=3888504191334779 chain=0"
+          },
+          {
+            "pool": "0x40a748574eab2e3b9e57b794c3e5ef97bc150b03",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0xad31e0a35fc811fbe2a3e83974ce62a91ea39049",
+            "dex": "aerodrome",
+            "kind": "solidly_stable",
+            "reason": "solidly_stable getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0x487262421cf2d60d3ea0aaa0b774c4ca5f561b1f",
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "reason": "solidly_volatile getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0xf8c0f0fc740b6649f9dc6bbd8a9efef08f7e59d8",
+            "dex": "aerodrome",
+            "kind": "solidly_volatile",
+            "reason": "solidly_volatile getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0x7d2942cf767ad2f201ce417ada8a79586a407a07",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x6a1c74e023fe2619516f89408e9d8c541e4e3eef",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xabf263a28816283ba56c8b151906ac7b759b719c",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xfe8a89a48a242953481f41cd106f7672a1c0472e",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xdbc6998296caa1652a810dc8d3baf4a8294330f1",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x0652202c4b2d09cb93aedefadc14b36869483a98",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x533315f9a0d817d6d1cc6145f44b17d9ed8c0812",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x47ca96ea59c13f72745928887f84c9f52c3d7348",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x861a2922be165a5bd41b1e482b49216b465e1b5f",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xafb62448929664bfccb0aae22f232520e765ba88",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x4e829f8a5213c42535ab84aa40bd4adcce9cba02",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x74e4c08bb50619b70550733d32b7e60424e9628e",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x3f0296bf652e19bca772ec3df08b32732f93014a",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter disagreed local=274620807570312 chain=28649074315565"
+          },
+          {
+            "pool": "0xc200f21efe67c7f41b81a854c26f9cda80593065",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x70acdf2ad0bf2402c957154f944c19ef4e1cbae1",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x5d4e504eb4c526995e0cc7a6e327fda75d8b52b5",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x3ba9ce0f19cf3ccb631b973c83712c7e6e9585ae",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x4f5905e36ac07ee1f01ffb939aa7f212a58d5cdf",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x4e962bb3889bf030368f56810a9c96b83cb3e778",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x3e66e55e97ce60096f74b7c475e8249f2d31a9fb",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xc5e51044eb7318950b1afb044fccfb25782c48c1",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xe846373c1a92b167b4e9cd5d8e4d6b1db9e90ec7",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xf2bcb85563a2610e732521dacc87cec40c896ded",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x565aecf84b5d30a6e79a5cef3f0da0fc4280debc",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x27e0dcf5bf0980c500bf223ccd2b46f3e57fd3d0",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xdfe5f275020def30993f042174fc2d335678b626",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xf4bdb3085fa680cb8ae6d95de3cf08e7719acedb",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xb07d7eece8866e549601af5c7622d8cdbedc914e",
+            "dex": "aerodrome_slipstream",
+            "kind": "slipstream",
+            "reason": "quoter rejected the pool"
+          }
+        ]
+      },
+      "tiers": {
+        "mid": {
+          "opportunities": 1,
+          "captured_same_block": 0,
+          "captured_next_block": 0,
+          "uncaptured": 0,
+          "ambiguous": 1,
+          "uncaptured_net_usd": 0.0,
+          "gross_opened_usd": 0.0
+        },
+        "head": {
+          "opportunities": 2,
+          "captured_same_block": 0,
+          "captured_next_block": 0,
+          "uncaptured": 0,
+          "ambiguous": 2,
+          "uncaptured_net_usd": 0.0,
+          "gross_opened_usd": 0.0
+        }
+      },
+      "examples_uncaptured": [],
+      "standing_at_end": [],
+      "elapsed_sec": 826.7,
+      "notes": [
+        "No opportunities in the 900-block window; retrying 1800 blocks.",
+        "sushiswap: univ2 fee taken from config; no router spot-check on this chain.",
+        "solidly_volatile: 3 of 62 pools failed getAmountOut and were excluded.",
+        "solidly_stable: 9 of 32 pools failed getAmountOut and were excluded.",
+        "univ3: 4 of 96 pools failed the quoter check and were excluded.",
+        "slipstream: 26 of 36 pools failed the quoter check and were excluded.",
+        "WETH marked at $2407.22 from the deepest WETH/stable pool at block 52970044. Stables (USDC, USDT, DAI, USDbC, USDC.e) are pegged at $1. V3 / Slipstream TVL is active-liquidity depth at the current tick, not deposited TVL.",
+        "Balancer vault covered a full flash (0 premium) for: WETH, USDC. Other tokens use Aave's 5 bps.",
+        "1 pools failed log replay (missed mint/burn or an undecoded event) and were excluded.",
+        "Lookback widened to 1800 blocks after an empty window."
+      ],
+      "counts": {
+        "opportunities": 3,
+        "captured_same_block": 0,
+        "captured_next_block": 0,
+        "uncaptured": 0,
+        "ambiguous": 3
+      },
+      "lookback_attempts": 2
+    },
+    {
+      "chain": "arbitrum",
+      "rpc": "https://arb1.arbitrum.io/rpc",
+      "start_block": 517443647,
+      "end_block": 517447647,
+      "blocks": 4000,
+      "base_fee_wei_max": 20006000,
+      "base_fee_gwei_max": 0.020006,
+      "weth_usd": 2398.11,
+      "token_prices_usd": {
+        "USDC": 1.0,
+        "USDC.e": 1.0,
+        "USDT": 1.0,
+        "DAI": 1.0,
+        "WETH": 2398.109626,
+        "ARB": 0.183709,
+        "WBTC": 81492.347703,
+        "GMX": 7.838958,
+        "MAGIC": 0.094834,
+        "RDNT": 0.000619,
+        "LINK": 12.150853,
+        "wstETH": 2996.402839,
+        "PENDLE": 2.083098
+      },
+      "extra_l1_fee_usd": 0.08,
+      "pools_discovered": 116,
+      "pools_trusted": 113,
+      "pools_replay_mismatch": 3,
+      "trusted_kinds": {
+        "univ2": 13,
+        "camelot": 7,
+        "camelot_stable": 4,
+        "univ3": 89
+      },
+      "cycles": 336,
+      "logs": 950,
+      "txs_touching_pools": 919,
+      "suspect_keys": 0,
+      "spot_screen_passes": 404,
+      "positive_before_gas_only": 290,
+      "max_spot_edge_bps": 113.45,
+      "quote_checks": {
+        "checked": [
+          {
+            "dex": "sushiswap",
+            "kind": "univ2",
+            "local": 2384590,
+            "chain": 2384590,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x54b26faf3671677c19f70c4b879a6f7b898f732c",
+            "local": 329794,
+            "chain": 329794,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x84652bb2539513baf36e225c930fdd8eaa63ce27",
+            "local": 76452059,
+            "chain": 76452059,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x97b192198d164c2a1834295e302b713bc32c8f1d",
+            "local": 498937,
+            "chain": 498937,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xa6c5c7d189fa4eb5af8ba34e63dcdd3a635d433f",
+            "local": 108725001903059313880,
+            "chain": 108725001903059313880,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x96059759c6492fb4e8a9777b65f307f2c811a34f",
+            "local": 411633123506693,
+            "chain": 413492922913200,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x9fa7314525d5c706213468220c7c9820cfe629cb",
+            "local": 25760490559400980,
+            "chain": 25760490559400980,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x65cfd8fb82213971076457756dfedb6143391983",
+            "local": 2735665058075,
+            "chain": 2735665058075,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xdc2167f4a5dec5401eceff1cb55c3573a13f24bd",
+            "local": 16109315812202416,
+            "chain": 16109315812202416,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xe8b2c9cbfd52cf9a157724e6416440566fa03150",
+            "local": 43191419185,
+            "chain": 43191419185,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xbfca4230115de8341f3a3d5e8845ffb3337b2be3",
+            "local": 446222206640566673,
+            "chain": 446222206640566673,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot_stable",
+            "pool": "0x5201f6482eea49c90fe609ed9d8f69328bac8dda",
+            "local": 8212628448927929,
+            "chain": 8212628448927929,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x2b07a6c54d3a40513ebc3650b05f953162af0d7b",
+            "local": 9775845072,
+            "chain": 9775845072,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot_stable",
+            "pool": "0xc1ad239594c165bd4d8847d281232172a4520818",
+            "local": 6262230,
+            "chain": 6262230,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x935763d7c14925690b89b14d738ecd8bf37db39a",
+            "local": 40411,
+            "chain": 40411,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x138c115bdcc8709d7f782ecc29dfb3829907d74b",
+            "local": 26450,
+            "chain": 26450,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xad94d6fbfdfc29dee39417a822994d53a4f287e9",
+            "local": 806,
+            "chain": 806,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xa635415f18cda471f5384465a9bc2097755e137f",
+            "local": 4954298412233,
+            "chain": 4954298412233,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot_stable",
+            "pool": "0x1c31fb3359357f6436565ccb3e982bc6bf4189ae",
+            "local": 3530144,
+            "chain": 3530144,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xd40b7b05ab39a39658de1d7c9301a9ed765b3472",
+            "local": 64938,
+            "chain": 64938,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot_stable",
+            "pool": "0x01efed58b534d7a7464359a6f8d14d986125816b",
+            "local": 1102926,
+            "chain": 1102926,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x913398d79438e8d709211cfc3dc8566f6c67e1a8",
+            "local": 1559308,
+            "chain": 1559308,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0xb4e3a78bf614825d0d2908e3221b28d8c085e6ab",
+            "local": 5186,
+            "chain": 5186,
+            "ok": true
+          },
+          {
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "pool": "0x800414784f5648e45d7cef32c2189d753e5a3c0e",
+            "local": 4049,
+            "chain": 4049,
+            "ok": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x6f38e884725a116c9c7fbf208e79fe8828a2595f",
+            "local": 7581213,
+            "chain": 44267636,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+            "local": 2396882425,
+            "chain": 2396882425,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc473e2aee3441bf9240be85eb122abb059a3b57c",
+            "local": 2388941726,
+            "chain": 2388941726,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x42fc852a750ba93d5bf772ecdc857e87a86403a9",
+            "local": 77699212,
+            "chain": 77699212,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xe754841b77c874135caca3386676e886459c2d61",
+            "local": 5759,
+            "chain": 32859,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443",
+            "local": 112400478,
+            "chain": 112400478,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x17c14d2c404d167802b16c450d3c99f88f2c4f4d",
+            "local": 57828165,
+            "chain": 57828165,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x7e5e4a3f855f19cc1a45b9eff1c8b2419036ce85",
+            "local": 259904,
+            "chain": 259904,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x42161084d0672e1d3f26a9b53e653be2084ff19c",
+            "local": 297556,
+            "chain": 1015356,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x641c00a822e8b671738d32a431a4fb6074e5c79d",
+            "local": 1315314208,
+            "chain": 1315314208,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc82819f72a9e77e2c0c3a69b3196478f44303cf4",
+            "local": 101912779,
+            "chain": 101912779,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x58039203442c9f2a45d5536bd021a383c7f3035c",
+            "local": 558827,
+            "chain": 558827,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x89a4026e9ade251c67b7fb38054931a39936d9c5",
+            "local": 66737552657298321,
+            "chain": 184273724828815177,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc6f780497a95e246eb9449f5e4770916dcd6396a",
+            "local": 5319881537872566423171,
+            "chain": 5319881537872566423171,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x92c63d0e701caae670c9415d91c474f686298f00",
+            "local": 229170569927238761501,
+            "chain": 229170569927238761501,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x92fd143a8fa0c84e016c2765648b9733b0aa519e",
+            "local": 59464817643209995405,
+            "chain": 59464817643209995405,
+            "ok": true,
+            "exact": true
+          }
+        ],
+        "failed": [
+          {
+            "pool": "0xaba6a8735e781ab377538f3340167f9456f47605",
+            "dex": "camelot_v2",
+            "kind": "camelot",
+            "reason": "camelot getAmountOut local=0 chain=0"
+          },
+          {
+            "pool": "0x15f5a316593ee05a4af7f38198c37fe4801abd65",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x76867321ebabe4d625bdbc3ff58ca0dcce1ca66f",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x83450968ec7606f98df1c170f8c922d55a13f236",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x59685750e3718453298a67fdab1cb9c52806fa49",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xa82b4fa56e7bf900cff8fc82362dd488506634a7",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x93261b4c3bf7123273466312dd3173b9b0255a6d",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x11dd0cb2b2e8f6b8fb786fb4180d13877e2f31f3",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xc26064c6768215cd1c54b17a5525387a36176173",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x2c089ee1080b091fb3b73df94f7840b33fbca020",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          }
+        ]
+      },
+      "tiers": {},
+      "examples_uncaptured": [],
+      "standing_at_end": [],
+      "elapsed_sec": 9.1,
+      "notes": [
+        "No opportunities in the 2000-block window; retrying 4000 blocks.",
+        "camelot: 1 of 27 pools failed getAmountOut and were excluded.",
+        "camelot_stable: 4 pools matched getAmountOut within 0.5%.",
+        "univ3: 9 of 169 pools failed the quoter check and were excluded.",
+        "WETH marked at $2398.11 from the deepest WETH/stable pool at block 517443646. Stables (USDC, USDT, DAI, USDbC, USDC.e) are pegged at $1. V3 / Slipstream TVL is active-liquidity depth at the current tick, not deposited TVL.",
+        "Balancer vault covered a full flash (0 premium) for: WETH, USDC.e, USDT, WBTC, DAI, RDNT. Other tokens use Aave's 5 bps.",
+        "3 pools failed log replay (missed mint/burn or an undecoded event) and were excluded.",
+        "Lookback widened to 4000 blocks after an empty window."
+      ],
+      "counts": {
+        "opportunities": 0,
+        "captured_same_block": 0,
+        "captured_next_block": 0,
+        "uncaptured": 0,
+        "ambiguous": 0
+      },
+      "lookback_attempts": 2
+    },
+    {
+      "chain": "mainnet",
+      "rpc": "https://ethereum-rpc.publicnode.com",
+      "start_block": 26253231,
+      "end_block": 26253311,
+      "blocks": 80,
+      "base_fee_wei_max": 44030675,
+      "base_fee_gwei_max": 0.044030675,
+      "weth_usd": 2399.47,
+      "token_prices_usd": {
+        "USDC": 1.0,
+        "DAI": 1.0,
+        "USDT": 1.0,
+        "WETH": 2399.473693,
+        "WBTC": 81554.443154,
+        "UNI": 7.187251,
+        "LINK": 12.165609,
+        "AAVE": 149.116174,
+        "CRV": 0.365111,
+        "MKR": 1672.599177,
+        "PEPE": 5e-06,
+        "SHIB": 5e-06,
+        "LDO": 0.387339
+      },
+      "extra_l1_fee_usd": 0.0,
+      "pools_discovered": 116,
+      "pools_trusted": 116,
+      "pools_replay_mismatch": 0,
+      "trusted_kinds": {
+        "univ2": 42,
+        "univ3": 74
+      },
+      "cycles": 342,
+      "logs": 657,
+      "txs_touching_pools": 484,
+      "suspect_keys": 0,
+      "spot_screen_passes": 182,
+      "positive_before_gas_only": 70,
+      "max_spot_edge_bps": 527.18,
+      "quote_checks": {
+        "checked": [
+          {
+            "dex": "uniswap_v2",
+            "kind": "univ2",
+            "local": 415965829700,
+            "chain": 415965829700,
+            "ok": true
+          },
+          {
+            "dex": "sushiswap",
+            "kind": "univ2",
+            "local": 415846918470,
+            "chain": 415846918470,
+            "ok": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xe0554a476a092703abdb3ef35c80e0d76d32939f",
+            "local": 417300145131250,
+            "chain": 417300145131250,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+            "local": 417044129443098,
+            "chain": 417044129443098,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8",
+            "local": 416024307637331,
+            "chain": 416024307637331,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x7bea39867e4169dbe237d55c8242a8f2fcdcc387",
+            "local": 414208999328943,
+            "chain": 414208999328943,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x60594a405d53811d3bc4766596efd80fd545a270",
+            "local": 416976693475969,
+            "chain": 416976693475969,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc2e9f25be6257c210d7adf0d4cd6e3e881ba25f8",
+            "local": 416039183559850,
+            "chain": 416039183559850,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xa80964c5bbd1a0e95777094420555fead1a26c1e",
+            "local": 23682212291046,
+            "chain": 23682212291046,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc7bbec68d12a0d1830360f8ec58fa599ba1b0e9b",
+            "local": 228250406,
+            "chain": 561655212,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x11b815efb8f581194ae79006d24e0d814b7697f6",
+            "local": 60630151,
+            "chain": 2398133692,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x4e68ccd3e89f51c3074ca5072bbac773960dfa36",
+            "local": 2392264498,
+            "chain": 2392264498,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xc5af84701f98fa483ece78af83f11b6c38aca71d",
+            "local": 10617161,
+            "chain": 10617161,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xe6ff8b9a37b0fab776134636d9981aa778c4e718",
+            "local": 92294692859730119,
+            "chain": 238778986684024187,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x4585fe77225b41b697c938b018e2ac67ac5a20c0",
+            "local": 8801116883140500570,
+            "chain": 8801116883140500570,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed",
+            "local": 1642667104561633191,
+            "chain": 1642667104561633191,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x6ab3bba2f41e7eaa262fa5a1a9b3932fa161526f",
+            "local": 4412922256745161,
+            "chain": 4412922256745161,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xfaa318479b7755b2dbfdd34dc306cb28b420ad12",
+            "local": 989609438994049,
+            "chain": 2993776232878860,
+            "ok": true,
+            "exact": false
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x1d42064fc4beb5f8aaf85f4617ae8b3b5b8bd801",
+            "local": 2979868077313711,
+            "chain": 2979868077313711,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x360b9726186c0f62cc719450685ce70280774dc8",
+            "local": 378221579600877,
+            "chain": 378221579600877,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x5d4f3c6fa16908609bac31ff148bd002aa6b8c83",
+            "local": 5073282336141628,
+            "chain": 5073282336141628,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8",
+            "local": 5050632683039963,
+            "chain": 5050632683039963,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x3a0f221ea8b150f3d3d27de8928851ab5264bb65",
+            "local": 82483648982308,
+            "chain": 82483648982308,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x4674abc5796e1334b5075326b39b748bee9eaa34",
+            "local": 23636132360686979,
+            "chain": 23636132360686979,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x5ab53ee1d50eef2c1dd3d5402789cd27bb52c1bb",
+            "local": 61839034641113338,
+            "chain": 61839034641113338,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x1353fe67fff8f376762b7034dc9066f0be15a723",
+            "local": 14109415029962,
+            "chain": 14109415029962,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xcfecc1c9f3cb6190cb1ff7f65a130bfbe5107d38",
+            "local": 162347502432162,
+            "chain": 162347502432162,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74",
+            "local": 161566889191365,
+            "chain": 161566889191365,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xf4ad61db72f114be877e87d62dc5e7bd52df4d9b",
+            "local": 73958631915,
+            "chain": 73958631915,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x919fa96e88d67499339577fa202345436bcdaf79",
+            "local": 45445849270025727557,
+            "chain": 45445849270025727557,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x4c83a7f819a5c37d64b4c5a2f8238ea082fa1f4e",
+            "local": 2699242990436740759,
+            "chain": 2699242990436740759,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xe8c6c9227491c0a8156a0106a0204d881bb7e531",
+            "local": 22779336280280658,
+            "chain": 22779336280280658,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x3afdc5e6dfc0b0a507a8e023c9dce2cafc310316",
+            "local": 283069208762031,
+            "chain": 283069208762031,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x11950d141ecb863f01007add7d1a342041227b58",
+            "local": 1906036150,
+            "chain": 1906036150,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0xf239009a101b6b930a527deaab6961b6e7dec8a6",
+            "local": 1887234386,
+            "chain": 1887234386,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x94e4b2e24523cf9b3e631a6943c346df9687c723",
+            "local": 2096774105,
+            "chain": 2096774105,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x2f62f2b4c5fcd7570a709dec05d68ea19c82a9ec",
+            "local": 2090609628,
+            "chain": 2090609628,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x5764a6f2212d502bc5970f9f129ffcd61e5d7563",
+            "local": 2059916966,
+            "chain": 2059916966,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x5777d92f208679db4b9778590fa3cab3ac9e2168",
+            "local": 999924,
+            "chain": 999924,
+            "ok": true,
+            "exact": true
+          },
+          {
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "pool": "0x6c6bc977e13df9b0de53b251522280bb72383700",
+            "local": 999894,
+            "chain": 999894,
+            "ok": true,
+            "exact": true
+          }
+        ],
+        "failed": [
+          {
+            "pool": "0x026babd2ae9379525030fc2574e39bc156c10583",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xab2044f105c43c25b1de3ee27504f0b889ce5953",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x261d53f3cd0b38dabbab252dcc8adeaa8c67bcba",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0xd296b77f1cad3f0ec64ae00cdbfa749e24b1f9cb",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          },
+          {
+            "pool": "0x42a25a0fd1a1b4d4bdf9299c8e0e1078a65fd131",
+            "dex": "uniswap_v3",
+            "kind": "univ3",
+            "reason": "quoter rejected the pool"
+          }
+        ]
+      },
+      "tiers": {
+        "head": {
+          "opportunities": 14,
+          "captured_same_block": 4,
+          "captured_next_block": 2,
+          "uncaptured": 0,
+          "ambiguous": 8,
+          "uncaptured_net_usd": 0.0,
+          "gross_opened_usd": 14.4909
+        },
+        "mid": {
+          "opportunities": 2,
+          "captured_same_block": 0,
+          "captured_next_block": 0,
+          "uncaptured": 0,
+          "ambiguous": 2,
+          "uncaptured_net_usd": 0.0,
+          "gross_opened_usd": 0.0
+        }
+      },
+      "examples_uncaptured": [],
+      "standing_at_end": [],
+      "elapsed_sec": 27.2,
+      "notes": [
+        "univ3: 5 of 94 pools failed the quoter check and were excluded.",
+        "WETH marked at $2399.47 from the deepest WETH/stable pool at block 26253230. Stables (USDC, USDT, DAI, USDbC, USDC.e) are pegged at $1. V3 / Slipstream TVL is active-liquidity depth at the current tick, not deposited TVL.",
+        "Balancer vault covered a full flash (0 premium) for: WETH, USDC, DAI, USDT, WBTC, AAVE, LDO. Other tokens use Aave's 5 bps."
+      ],
+      "counts": {
+        "opportunities": 16,
+        "captured_same_block": 4,
+        "captured_next_block": 2,
+        "uncaptured": 0,
+        "ambiguous": 10
+      },
+      "lookback_attempts": 1
+    }
+  ],
+  "markdown": "| Chain | Blocks | Tier | Opportunities | Captured same block | Captured next block | Ambiguous | Uncaptured | Uncaptured net USD after gas | Notes |\n| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n| base | 52970045\u201352971845 | long_tail | 0 | 0 | 0 | 0 | 0 | 0.00 | base fee 0.0050 gwei; WETH $2407.22; suspect excluded 0; replay mismatches 1; max spot edge 380.46 bps; fee-only evals 11750 (cleared fees and premium, not the gas cushion) |\n| base | 52970045\u201352971845 | cross_tier | 0 | 0 | 0 | 0 | 0 | 0.00 |  |\n| base | 52970045\u201352971845 | head | 2 | 0 | 0 | 2 | 0 | 0.00 |  |\n| base | 52970045\u201352971845 | mid | 1 | 0 | 0 | 1 | 0 | 0.00 |  |\n| arbitrum | 517443647\u2013517447647 | long_tail | 0 | 0 | 0 | 0 | 0 | 0.00 | base fee 0.0200 gwei; WETH $2398.11; suspect excluded 0; replay mismatches 3; max spot edge 113.45 bps; fee-only evals 290 (cleared fees and premium, not the gas cushion) |\n| arbitrum | 517443647\u2013517447647 | cross_tier | 0 | 0 | 0 | 0 | 0 | 0.00 |  |\n| arbitrum | 517443647\u2013517447647 | head | 0 | 0 | 0 | 0 | 0 | 0.00 |  |\n| mainnet | 26253231\u201326253311 | long_tail | 0 | 0 | 0 | 0 | 0 | 0.00 | base fee 0.0440 gwei; WETH $2399.47; suspect excluded 0; replay mismatches 0; max spot edge 527.18 bps; fee-only evals 70 (cleared fees and premium, not the gas cushion) |\n| mainnet | 26253231\u201326253311 | cross_tier | 0 | 0 | 0 | 0 | 0 | 0.00 |  |\n| mainnet | 26253231\u201326253311 | head | 14 | 4 | 2 | 8 | 0 | 0.00 |  |\n| mainnet | 26253231\u201326253311 | mid | 2 | 0 | 0 | 2 | 0 | 0.00 |  |"
+}

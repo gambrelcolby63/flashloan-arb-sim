@@ -1,0 +1,16 @@
+{
+  "name": "flashloan-arb-sim",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && forge build",
+  "forwardPorts": [8545],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
