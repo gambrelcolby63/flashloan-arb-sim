@@ -70,6 +70,7 @@ make test          # forge unit tests + pytest. No RPC, no broadcast.
 make test-fork     # pinned forks. Skips a chain when the node no longer has that block.
 make analyze       # read-only competition scan. Writes analysis/latest.json.
 make liquidations  # read-only liquidation study. Writes analysis/liquidations.json.
+make headline      # $5,000 overlooked-market backfill. Adds headline_5k to that file and leaves the rest.
 make mempool       # read-only mempool log, about 20 minutes. Writes analysis/mempool.json.
 make anvil-demo    # local fork only. Submits to 127.0.0.1.
 ```
@@ -135,7 +136,54 @@ The Balancer rows are smaller because the test stops at the first size that work
 
 ## Flash-loan liquidations
 
-Same rules as the arb scan. Nothing in this path broadcasts. Morpho and Euler numbers below are from their public APIs for 25 July 2026 17:59 UTC through 23 October 2026 17:59 UTC. Delay, gas, and the open-book quotes are archive `eth_call`s and receipts. Where a field could not be read, it is left out of the sum.
+Same rules as the arb scan. Nothing in this path broadcasts. Morpho and Euler numbers below are from their public APIs for 25 July 2026 17:59 UTC through 23 October 2026 17:59 UTC. Delay, gas, and the open-book quotes are archive `eth_call`s and receipts. Where a field could not be read, it is left out of the sum. Every liquidation is still in `loan_sizes`. The section under this one is only the loans of at least $5,000 in the overlooked markets.
+
+### Loans of at least $5,000
+
+Overlooked, fixed before this count, means Euler v2 on every chain, Morpho Blue on Base only when current supply is under $500,000 (`long_tail` or `mid`), Morpho Blue on Arbitrum (isolated, whatever the current tier), Moonwell, Seamless, the Fluid liquidator on Base `0x8f5455245e74a2ea60a32751654a57b1aae4be99`, and one Silo liquidation contract on Arbitrum `0x20deb7395f88a18af2eb51a0c3053f15c1781933`. Head Morpho books and mainnet Morpho stay in the log and are not this headline. A Morpho Base market whose current supply was not read is `supply_unknown`, not small. The tier is current supply, not supply on the liquidation day. A missing price is not treated as under $5,000.
+
+Of the 4,505 Morpho and Euler liquidations already logged, 383 have a priced repay of at least $5,000. Eight of those are in this headline (4 Euler, 4 small Base Morpho). The other 375 are mainnet Morpho, or Base Morpho whose current tier is not `long_tail` or `mid`. Zero Base rows of this size were `supply_unknown`. The backfill then added Moonwell, Seamless, Fluid, Silo, and Arbitrum Morpho. The headline is 16 events. Source: `headline_5k` in `analysis/liquidations.json`, written 2026-10-23T20:32:41Z. `make headline` does not replace the rest of that file.
+
+| Market | Chain | Liquidations | Repaid sum | Median delay | Liquidators | Quoted net |
+| --- | --- | ---: | ---: | --- | ---: | --- |
+| Morpho RSS/USDC, long-tail `0x1293c4e7…` | Base | 1 | 3,005,223.07 | 0 blocks / 0s | 1 | −3,005,221.79 |
+| Moonwell AERO `0x73902f61…` | Base | 6 | 65,361.93 | not measured | 4 | not quoted |
+| Euler XAUt/USDC `0x797DD806…` | mainnet | 1 | 27,661.04 | 0 blocks / 0s | 1 | −13,266.56 |
+| Morpho stkWELL/USDC, long-tail `0xb3920b96…` | Base | 2 | 26,148.90 | 3,729.5 blocks / 7,459s | 1 | not quoted |
+| Euler USDC/WETH `0xD8b27CF3…` | mainnet | 1 | 16,007.13 | 1 block / 12s | 1 | −2,347.56 |
+| Euler sUSDf/USDC `0x3573A84B…` | mainnet | 1 | 8,478.51 | 1,132 blocks / 13,620s | 1 | not quoted |
+| Morpho yoUSD/USDC, mid `0x1a3e69d0…` | Base | 1 | 7,289.74 | 0 blocks / 0s | 1 | not quoted |
+| Moonwell USDC `0xedc817a2…` | Base | 1 | 5,731.44 | not measured | 1 | not quoted |
+| Moonwell WETH `0x628ff693…` | Base | 1 | 5,618.98 | not measured | 1 | not quoted |
+| Euler mFARM/USDC `0x6f2598c9…` | mainnet | 1 | 5,107.73 | 2,566 blocks / 30,900s | 1 | not quoted |
+
+Morpho Arbitrum, Seamless, Fluid, and Silo do not appear in that table. Their counts are below. Thirteen addresses landed the 16 events. Only the Moonwell AERO market had more than one. A single liquidator means one address landed the transaction. Failed attempts are not in the log.
+
+Delay was measured on the 8 Morpho and Euler rows, not on Moonwell. Three were still healthy at the end of the previous block (delay 0): RSS/USDC, XAUt/USDC, and yoUSD/USDC. Two were already liquidatable one block earlier: stkWELL/USDC at 1 Base block / 2 seconds (`0x156714ef…`, repay $18,177.44) and USDC/WETH at 1 mainnet block / 12 seconds. Three sat longer than five blocks, and longer than an hour: stkWELL/USDC again at 7,458 blocks / 14,916 seconds (`0x83a641e3…`, repay $7,971.46, same liquidator `0x8407699e…`), sUSDf/USDC at 1,132 blocks / 13,620 seconds, and mFARM/USDC at 2,566 blocks / 30,900 seconds. None of the 8 was still unread at the 7-day censor.
+
+The slippage quote is a direct Uniswap v2, Solidly, or Uniswap v3 quote of the seized collateral into the loan token at the previous block. The winner’s own swap is not in that state. Slipstream was not searched. USD is the daily loan-token mark. Gas is the winner’s receipt, including that transaction’s route, not a bare liquidate. The flash fee is zero only when the Morpho or Balancer balance at that quote block covers the repay. Three rows produced a net. All three are negative, and all three were delay 0 or 1.
+
+| Liquidation | Delay | DEX out | Gas | Flash fee | Net |
+| --- | --- | ---: | ---: | ---: | ---: |
+| RSS/USDC, tx `0x2c8a9255…`, block 52358356 | 0 | 1.29 | 0.003 | 0 | −3,005,221.79 |
+| XAUt/USDC, tx `0x5fbf427b…`, block 26255932 | 0 | 14,395.08 | 0.59 | 0 | −13,266.56 |
+| USDC/WETH, tx `0x82c7bd24…`, block 25791662 | 1 block / 12s | 13,659.76 | 0.19 | 0 | −2,347.56 |
+
+RSS repaid $3,005,223.07 and the direct pool returned $1.29 of USDC. That is an empty book, not a decimal bug. XAUt’s daily seized mark is $27,858.04 and the pool returned $14,395.08 against a $27,661.04 repay. USDC seized against WETH marked $16,154.34 and the pool returned $13,659.76 against a $16,007.13 repay. Gas is not what makes these negative.
+
+The three that sat for hours had no direct v2, Solidly, or v3 pool, so net is unmeasured. sUSDf seized marked $8,491.00 against an $8,478.51 repay, and mFARM seized marked $5,108.87 against a $5,107.73 repay. Those marks are not a fill. stkWELL is the same sit already in the delay section, where the daily-mark bonus was $1,710.70. Slipstream and any other venue were not searched. Zero quoted rows were both slow and profitable. Nothing in this set was shown left untaken long enough for a slower newcomer to take a profit after gas and a real slippage quote.
+
+Moonwell is the 21 markets `getAllMarkets` returned. Publicnode served Base logs back to block 51038012 (head 52998011), about 45.37 days, with 0 gaps. The walk stopped at block 50998012. The 90-day start was block 49106513, so about 44.7 days of Base logs were not scanned. A stop is not zero events. Inside the readable window Moonwell had 671 `LiquidateBorrow` logs and all 671 have a debt price. Eight are at least $5,000. The AERO market’s underlying is `0x940181a9…` (AERO in `config/chains/base.json`): six repays, sum $65,361.93, average $10,893.66, median $6,704.50, four liquidators (`0x0d9d7517…`, `0x3623c921…`, `0x605560b8…`, `0xddcd62f4…`). The largest is $32,392.89 in tx `0x35545110…`, block 51670276. USDC `0xedc817a2…` is one repay of $5,731.44 (tx `0xfbb6b1ea…`). WETH `0x628ff693…` is one repay of $5,618.98 (tx `0x153a287d…`). `seizeTokens` is an mToken amount, so seized USD and the swap were not computed. Delay was not searched. Some winner receipts are large ($46.30, $247.55, $278.80) because they are the whole transaction.
+
+Seamless, on the same Base window, returned 0 events and 0 gaps. The Fluid liquidator returned 0 logs. Neither is a 90-day claim.
+
+Silo on that one Arbitrum contract was scanned for blocks 486499743–517631735, about 90.08 days at 0.25 seconds a block, with 0 gaps. Six `LiquidationCall` logs, all one market `0xfc1AC64e…`, one borrower `0xf1F38783…`, one liquidator `0x1A7F0B52…`. The log does not carry token addresses. Repaid raw runs from about 2.77e19 to 4.53e19 and seized raw from about 8.1e7 to 1.1e8. USD was not computed, and these six are not counted as under $5,000.
+
+Arbitrum Morpho, same 90-day API window as mainnet and Base, returned 80 liquidations. None entered the headline. A read of the Morpho daily series prices all 80. The largest is $811.90, 811.946577 USDC of thBILL collateral in tx `0xccb96dcc…`, block 488148833, that day’s USDC mark $0.999939789. One repay is 0.00023084538773554 WETH. Five repay USDT0 (`0xFd086bC7…`, 6 decimals). The largest of those is $37.22 (37.25894 tokens, tx `0xc184e2c0…`). The other four are $11.68, $3.91, $3.71, and $0.96.
+
+The open book is a fresh indexer pull of health factor at or below 1 on mainnet, Base, and Arbitrum. Forty Arbitrum Morpho positions have a debt mark of at least $5,000. Zero Base positions do. None of the forty had collateral of at least 30% of debt and debt of at most $2 million, so none were read on chain and none were quoted. Thirty-one are K/USDC head with no collateral mark or a debt mark above $2 million (the largest mark is $14,494,340,989.02). Six are RLP/USDC head whose collateral mark is under 30% of debt; the largest is $1,681,693.88 of debt against $3,301.23 of collateral. One xUSD/USDC mark is $169,306,889.55 and one GVLT/USDC mark is $76,006,853.93, both with no collateral mark. The one long-tail row is wstUSR/USDC `0x06a5954e…` at $9,817.29, also with no collateral mark. These are not sitting profits. Euler’s open dollar book was not measured.
+
+No $5,000-or-larger loan in these overlooked markets was shown left untaken long enough for a slower newcomer. The three exits that could be quoted were taken in the same block or the next one, and the quote lost money after gas. The three that sat for hours had no direct pool, so that profit was not measured. Moonwell’s eight large repays have no delay and no seize quote. Seamless and Fluid were empty only in the 45 days Base still serves. Silo’s six logs have no USD. Arbitrum Morpho’s quarter never reached $5,000. The open indexer rows were not confirmed unhealthy on chain.
 
 ### What was liquidated
 
@@ -795,9 +843,10 @@ Two limits sit next to the zero. Twenty minutes can miss a governance vote or a 
 - `config/chains/` — tokens, factories, TVL bands, gas units
 - `config/liquidation-fork.json` — the AERO liquidation the fork test replays
 - `analysis/latest.json` — the arb table above
-- `analysis/liquidations.json` — the liquidation study
+- `analysis/liquidations.json` — the liquidation study, including `loan_sizes` and `headline_5k`
 - `analysis/mempool.json` — the public-mempool lead-time log
 - `bot/flasharb/mempool.py` — pending-transaction classifier. It does not sign or send.
+- `bot/flasharb/headline.py` — the $5,000 overlooked-market backfill. It does not sign or send.
 
 ## What I learned
 

@@ -1,5 +1,11 @@
 from flasharb.liquidations import TOPIC_AAVE_LIQUIDATION, TOPIC_EULER_LIQUIDATE, TOPIC_LIQUIDATE_BORROW, TOPIC_SILO_LIQUIDATION
-from flasharb.liquidations import build_loan_sizes
+from flasharb.liquidations import (
+    build_loan_sizes,
+    headline_debt,
+    liquidator_counts,
+    net_after_costs,
+    overlooked_class,
+)
 from flasharb.liqmath import (
     bonus_usd,
     concentration,
@@ -218,3 +224,32 @@ def test_loan_sizes_keep_every_row_and_split_markets():
     assert positions_out["records"][0]["collateral_balance_usd"] == 70.0
     assert report["liquidatable_debt_at_least_50"]["n"] == 1
     assert report["liquidatable_debt_at_least_50"]["average"] == 80.0
+
+
+def test_headline_keeps_small_base_and_drops_head_and_unpriced():
+    assert overlooked_class("euler-v2", "arbitrum", "euler") == "euler-v2"
+    assert overlooked_class("morpho-blue", "base", "long_tail") == "morpho-base-small"
+    assert overlooked_class("morpho-blue", "base", "mid") == "morpho-base-small"
+    assert overlooked_class("morpho-blue", "base", "head") is None
+    assert overlooked_class("morpho-blue", "base", "supply_unknown") == "morpho-base-supply-unknown"
+    assert overlooked_class("morpho-blue", "mainnet", "long_tail") is None
+    assert overlooked_class("morpho-blue", "arbitrum", "head") == "morpho-arbitrum-isolated"
+    assert overlooked_class("moonwell", "base", None) == "moonwell"
+    assert overlooked_class("silo", "arbitrum", None) == "silo"
+    assert headline_debt(5000) is True
+    assert headline_debt(4999.99) is False
+    assert headline_debt(None) is False
+    net, missing = net_after_costs(120.0, 100.0, 1.5, 0.0)
+    assert net == 18.5
+    assert missing == []
+    net, missing = net_after_costs(None, 100.0, 1.0, 0.0)
+    assert net is None
+    assert missing == ["slippage_quote"]
+    counts = liquidator_counts([
+        {"protocol": "euler-v2", "chain": "mainnet", "market_id": "0xabc", "liquidator": "0xAA", "collateral_symbol": "WETH", "loan_symbol": "USDC"},
+        {"protocol": "euler-v2", "chain": "mainnet", "market_id": "0xabc", "liquidator": "0xaa", "collateral_symbol": "WETH", "loan_symbol": "USDC"},
+        {"protocol": "euler-v2", "chain": "mainnet", "market_id": "0xabc", "liquidator": "0xBB", "collateral_symbol": "WETH", "loan_symbol": "USDC"},
+    ])
+    row = counts[("euler-v2", "mainnet", "0xabc")]
+    assert row["distinct_liquidators"] == 2
+    assert row["liquidations"] == 3

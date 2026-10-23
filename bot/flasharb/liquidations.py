@@ -56,6 +56,8 @@ QUOTE_CAP = 18
 DUST_USD = 20.0
 HEAD_SUPPLY_USD = 500_000.0
 LONG_TAIL_SUPPLY_USD = 100_000.0
+# Headline cut. Everything below this is still logged. It is not the headline.
+HEADLINE_DEBT_USD = 5_000.0
 # Collaterals treated as head only when the market's supply USD is missing.
 HEAD_SYMBOLS = {
     "WETH", "WETH.e", "USDC", "USDC.e", "USDT", "USD₮0", "DAI", "WBTC", "wstETH",
@@ -457,6 +459,83 @@ def fetch_market_supply(events: list[dict]) -> None:
         event["market_supply_usd"] = row.get("supply_assets_usd")
         event["market_borrow_usd"] = row.get("borrow_assets_usd")
         event["market_tier"] = tier_of(event.get("market_supply_usd"), event.get("collateral_symbol"))
+
+
+def overlooked_class(protocol: str, chain: str, tier: str | None) -> str | None:
+    """Markets this study treats as overlooked. Head Morpho books are not in the list.
+
+    Morpho Base is small only when current supply is under $500k (long_tail or mid).
+    Supply that was not read is its own class, not called small. Morpho on Arbitrum
+    is isolated per market. Mainnet Morpho is outside this list.
+    """
+    if protocol == "euler-v2":
+        return "euler-v2"
+    if protocol == "moonwell":
+        return "moonwell"
+    if protocol == "seamless":
+        return "seamless"
+    if protocol == "fluid":
+        return "fluid"
+    if protocol == "silo":
+        return "silo"
+    if protocol == "morpho-blue" and chain == "arbitrum":
+        return "morpho-arbitrum-isolated"
+    if protocol == "morpho-blue" and chain == "base" and tier in {"long_tail", "mid"}:
+        return "morpho-base-small"
+    if protocol == "morpho-blue" and chain == "base" and tier == "supply_unknown":
+        return "morpho-base-supply-unknown"
+    return None
+
+
+def headline_debt(amount_usd: float | None, minimum: float = HEADLINE_DEBT_USD) -> bool:
+    """True only for a priced debt at or above the cut. Missing prices are not small."""
+    return amount_usd is not None and amount_usd >= minimum
+
+
+def net_after_costs(
+    dex_out_usd: float | None,
+    repay_usd: float | None,
+    gas_usd: float | None,
+    flash_fee_usd: float | None,
+) -> tuple[float | None, list[str]]:
+    """Slippage quote minus debt, gas, and flash fee. A missing input is not zero."""
+    missing = []
+    if dex_out_usd is None:
+        missing.append("slippage_quote")
+    if repay_usd is None:
+        missing.append("repay_usd")
+    if gas_usd is None:
+        missing.append("gas")
+    if flash_fee_usd is None:
+        missing.append("flash_fee")
+    if missing:
+        return None, missing
+    return dex_out_usd - repay_usd - gas_usd - flash_fee_usd, []
+
+
+def liquidator_counts(events: list[dict]) -> dict[tuple, dict]:
+    """Distinct liquidators that landed a liquidation. Failed attempts are not visible."""
+    grouped: dict[tuple, set[str]] = {}
+    labels: dict[tuple, dict] = {}
+    for event in events:
+        key = (event.get("protocol"), event.get("chain"), (event.get("market_id") or "unknown").lower())
+        grouped.setdefault(key, set()).add((event.get("liquidator") or "").lower())
+        labels[key] = {
+            "protocol": event.get("protocol"),
+            "chain": event.get("chain"),
+            "market_id": event.get("market_id"),
+            "collateral": event.get("collateral_symbol") or event.get("collateral"),
+            "loan": event.get("loan_symbol") or event.get("loan"),
+        }
+    out = {}
+    for key, liquidators in grouped.items():
+        liquidators.discard("")
+        row = dict(labels[key])
+        row["liquidations"] = sum(1 for event in events if (event.get("protocol"), event.get("chain"), (event.get("market_id") or "unknown").lower()) == key)
+        row["distinct_liquidators"] = len(liquidators)
+        row["liquidators"] = sorted(liquidators)
+        out[key] = row
+    return out
 
 
 def tier_of(supply_usd: float | None, symbol: str | None) -> str:
@@ -913,11 +992,10 @@ def _quote_one(rpc: Rpc, cfg: dict, row: dict, prices: dict, snap: dict | None) 
     return out
 
 
-def _best_swap(rpc: Rpc, cfg: dict, token_in: str, token_out: str, amount_in: int) -> dict:
+def _best_swap(rpc: Rpc, cfg: dict, token_in: str, token_out: str, amount_in: int, block: int | str = "latest") -> dict:
     token_in = checksum(token_in)
     token_out = checksum(token_out)
     best: dict[str, Any] = {"amount_out": None}
-    block = "latest"
     for fac in cfg["factories"]:
         kind = fac["kind"]
         try:
@@ -959,7 +1037,7 @@ def _best_swap(rpc: Rpc, cfg: dict, token_in: str, token_out: str, amount_in: in
                     pool = decode(["address"], raw)[0]
                     if int(pool, 16) == 0:
                         continue
-                    out = _quote_v3(rpc, cfg["quoter_v2"], token_in, token_out, amount_in, fee)
+                    out = _quote_v3(rpc, cfg["quoter_v2"], token_in, token_out, amount_in, fee, block)
                     if out is None:
                         continue
                     if best["amount_out"] is None or out > best["amount_out"]:
@@ -971,7 +1049,7 @@ def _best_swap(rpc: Rpc, cfg: dict, token_in: str, token_out: str, amount_in: in
     return best
 
 
-def _quote_v3(rpc: Rpc, quoter: str, token_in: str, token_out: str, amount: int, fee: int) -> int | None:
+def _quote_v3(rpc: Rpc, quoter: str, token_in: str, token_out: str, amount: int, fee: int, block: int | str = "latest") -> int | None:
     try:
         raw = _call(
             rpc,
@@ -979,7 +1057,7 @@ def _quote_v3(rpc: Rpc, quoter: str, token_in: str, token_out: str, amount: int,
             "quoteExactInputSingle((address,address,uint256,uint24,uint160))",
             ["(address,address,uint256,uint24,uint160)"],
             [(token_in, token_out, amount, fee, 0)],
-            "latest",
+            block,
         )
     except RpcError:
         return None
@@ -988,12 +1066,12 @@ def _quote_v3(rpc: Rpc, quoter: str, token_in: str, token_out: str, amount: int,
     return int.from_bytes(raw[:32], "big")
 
 
-def _flash_fee(rpc: Rpc, cfg: dict, loan_token: str, repay_assets: int) -> dict:
+def _flash_fee(rpc: Rpc, cfg: dict, loan_token: str, repay_assets: int, block: int | str = "latest") -> dict:
     try:
-        morpho_bal = decode(["uint256"], _call(rpc, loan_token, "balanceOf(address)", ["address"], [checksum(MORPHO)], "latest"))[0]
+        morpho_bal = decode(["uint256"], _call(rpc, loan_token, "balanceOf(address)", ["address"], [checksum(MORPHO)], block))[0]
         bal_bal = decode(
             ["uint256"],
-            _call(rpc, loan_token, "balanceOf(address)", ["address"], [checksum(cfg["balancer_vault"])], "latest"),
+            _call(rpc, loan_token, "balanceOf(address)", ["address"], [checksum(cfg["balancer_vault"])], block),
         )[0]
     except RpcError as exc:
         return {"flash_fee_usd": None, "flash_fee_note": str(exc)[:160]}
@@ -1001,7 +1079,10 @@ def _flash_fee(rpc: Rpc, cfg: dict, loan_token: str, repay_assets: int) -> dict:
         return {
             "flash_fee_usd": 0.0,
             "flash_source": "morpho" if morpho_bal >= repay_assets else "balancer",
-            "flash_fee_note": "latest balance covers the repay; Morpho and Balancer flash fees are zero",
+            "flash_fee_note": (
+                f"{'latest block' if block == 'latest' else 'block ' + str(block)}: "
+                "balance covers the repay; Morpho and Balancer flash fees are zero"
+            ),
         }
     return {
         "flash_fee_usd": None,
