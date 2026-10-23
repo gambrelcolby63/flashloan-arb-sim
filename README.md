@@ -70,6 +70,7 @@ make test          # forge unit tests + pytest. No RPC, no broadcast.
 make test-fork     # pinned forks. Skips a chain when the node no longer has that block.
 make analyze       # read-only competition scan. Writes analysis/latest.json.
 make liquidations  # read-only liquidation study. Writes analysis/liquidations.json.
+make mempool       # read-only mempool log, about 20 minutes. Writes analysis/mempool.json.
 make anvil-demo    # local fork only. Submits to 127.0.0.1.
 ```
 
@@ -209,6 +210,56 @@ Euler’s open-book check covered 48 debtors on 12 vaults whose total borrows we
 
 This is not worth running as a speed game. On the Morpho sample that contains the paper bonus, the median delay is 0 blocks and about $1.06 million of that sample’s positive marks were already gone by the next block. What sits longer is bad debt, a token with no pool, or a few hundred to a couple of thousand dollars of daily-mark bonus that was not shown to survive a swap. Euler’s entire 90-day paper bonus is $506.12. The smaller lenders were either empty in the short log window or, on Moonwell, already worked by one address for a few hundred dollars of repaid debt over two days. The fork shows the mechanic works and that the winner’s slot on that AERO position paid $11.89 before gas.
 
+## Public mempool lead time
+
+Logging only. `python -m flasharb.mempool` subscribes to pending transactions and writes `analysis/mempool.json`. It does not sign, send, or resubmit. The raw calldata and the signature (`r`, `s`, `v`) are not stored. Snapshot votes are signed messages on hub.snapshot.org. They never enter this feed.
+
+### Mainnet
+
+`wss://ethereum-rpc.publicnode.com`, 1,200 seconds, ending 2026-10-23T18:51:58Z. The socket returned **14,984** pending bodies. All 14,984 had a null block number, so they were seen before inclusion. None were already mined on arrival. The same socket delivered **99** new heads, blocks 26257128–26257226, with no reconnect and no RPC error.
+
+**Flagged events: 0.** The median lead time for a flagged event was not measured, because there was nothing to measure.
+
+The classifier was looking for Governor `castVote` and `execute`, Aave `liquidationCall` on the V2 and V3 pools, Morpho Blue `liquidate`, Euler `liquidate` on the 17 vaults from the liquidation study, Chainlink `transmit`, Pyth `updatePriceFeeds`, `poke(bytes32[][])`, and large transfers of USDC, USDT, DAI, WETH, wstETH, WBTC, or native ETH involving seven listed treasuries. Large means at least 10,000 whole stablecoins, 5 WETH or wstETH, 0.5 WBTC, or 5 ETH. That cutoff is a raw unit count, not a price fetched during the run. None of those shapes appeared in the 14,984 bodies.
+
+The socket is not silent. Every 80th unclassified transaction was timed, 187 rows, 183 of them included before the grace period ended. Lead time is the including block’s timestamp minus the wall clock when the body was first seen. Positive means this process was early.
+
+| Feed sample | Value |
+| --- | ---: |
+| Included | 183 of 187 |
+| Median lead, seconds | 6.44 |
+| Median of the positive leads, seconds | 6.85 |
+| Minimum, seconds | -5.02 |
+| Maximum, seconds | 178.03 |
+| At least one 12-second block | 24 |
+| At least 60 seconds | 7 |
+| Negative (seen after the block timestamp) | 15 |
+
+The unrounded median is 6.438694000244141 seconds, in `analysis/mempool.json`. The seven waits over a minute were not decoded as liquidations, votes, oracle updates, or treasury transfers. They are slow unclassified transactions, not a book of skipped liquidations.
+
+### Base and Arbitrum
+
+Sixty seconds each, concurrent with the mainnet watch, on the publicnode websockets. Blocks arrived. Pending notifications did not.
+
+| Chain | New blocks | Pending notifications | HTTP pending filter | txpool_status | Observable lead |
+| --- | ---: | ---: | ---: | --- | ---: |
+| Base | 30 | 0 | 0 changes | pending 0, queued 0 | 0 seconds |
+| Arbitrum | 217 | 0 | 0 changes | method handler crashed | 0 seconds |
+
+Base produced a block about every 2 seconds and Arbitrum about every 0.28 seconds, and neither subscription returned a pending hash or a full pending body. That is a private sequencer. A newcomer does not get a public head start on either chain. The Arbitrum `txpool_status` crash is a node error, not a mempool we were allowed to read.
+
+### Flashbots Protect
+
+Protect hides a transaction that was submitted to it. It does not publish that transaction for someone else to read early.
+
+`wss://rpc.flashbots.net` is not a websocket. The client was redirected to `https://protectrpc.flashbots.net`. `eth_chainId` on the HTTP endpoint returned 1. `txpool_status` returned HTTP 403. During the run, creating a pending filter and reading it back returned `filter not found`. Five more attempts after the run created a filter every time: four follow-ups were `filter not found`, and one returned 0 changes. No hash from those calls was stored. Nothing was sent, signed, or submitted.
+
+### Is the lead time actionable?
+
+No. Across 14,984 public pending bodies and 99 mainnet blocks, the events this watcher was built to notice did not appear, so there is no flagged lead time to act on. The head start that does exist, on ordinary unclassified transactions, has a median of 6.44 seconds. That is under one mainnet block, and it is the same public mempool every other reader of this socket can see. Base and Arbitrum show no pending transactions at all. Protect removes transactions from this picture instead of revealing them. A small player simulating on this feed does not get a trade.
+
+Two limits sit next to the zero. Twenty minutes can miss a governance vote or a large public liquidation that happens to fall outside the window. A liquidation sent to a searcher’s own contract does not match `liquidationCall` or Morpho `liquidate`, and an Euler vault outside the 17 listed ones is not flagged. Both of those absences make the flagged count a lower bound, not a claim that no liquidation was mined.
+
 ## Layout
 
 - `src/FlashLoanArbExecutor.sol` — borrow, swap, repay, `minProfit`
@@ -220,6 +271,8 @@ This is not worth running as a speed game. On the Morpho sample that contains th
 - `config/liquidation-fork.json` — the AERO liquidation the fork test replays
 - `analysis/latest.json` — the arb table above
 - `analysis/liquidations.json` — the liquidation study
+- `analysis/mempool.json` — the public-mempool lead-time log
+- `bot/flasharb/mempool.py` — pending-transaction classifier. It does not sign or send.
 
 ## What I learned
 

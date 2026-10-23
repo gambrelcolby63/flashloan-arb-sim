@@ -1,4 +1,4 @@
-.PHONY: test test-unit test-py test-fork analyze liquidations anvil-demo build
+.PHONY: test test-unit test-py test-fork analyze liquidations mempool anvil-demo build
 
 # Phone / Codespaces friendly. `make test` never touches a live chain.
 
@@ -21,6 +21,9 @@ analyze:
 
 liquidations:
 	PYTHONPATH=bot python3 -m flasharb.liquidations
+
+mempool:
+	PYTHONPATH=bot python3 -m flasharb.mempool
 
 anvil-demo:
 	bash scripts/anvil-demo.sh
