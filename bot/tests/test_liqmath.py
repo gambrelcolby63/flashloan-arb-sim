@@ -1,0 +1,255 @@
+from flasharb.liquidations import TOPIC_AAVE_LIQUIDATION, TOPIC_EULER_LIQUIDATE, TOPIC_LIQUIDATE_BORROW, TOPIC_SILO_LIQUIDATION
+from flasharb.liquidations import (
+    build_loan_sizes,
+    headline_debt,
+    liquidator_counts,
+    net_after_costs,
+    overlooked_class,
+)
+from flasharb.liqmath import (
+    bonus_usd,
+    concentration,
+    is_unhealthy,
+    lif_wad,
+    max_borrow_assets,
+    median,
+    position_borrowed,
+    quantile,
+    size_summary,
+    slowly_captured,
+    take_size,
+    taylor_interest,
+)
+
+
+def test_liquidation_topics_are_pinned():
+    # Checked against Moonwell/Compound, Aave V3, the Silo log in
+    # 0x25fe1e666c3ee5d313d60a686e24af23d54bf5279f0ae51c40be58d905c7c799,
+    # and an Euler Liquidate log.
+    assert TOPIC_LIQUIDATE_BORROW == "0x298637f684da70674f26509b10f07ec2fbc77a335ab1e7d6215a4b2484d8bb52"
+    assert TOPIC_AAVE_LIQUIDATION == "0xe413a321e8681d831f4dbccbca790d2952b56f977908e45be37335533e005286"
+    assert TOPIC_SILO_LIQUIDATION == "0x3a84f64446e8eada995aa9da2ddbfcd9b5d5d650503b19f024096d04c05ef2a9"
+    assert TOPIC_EULER_LIQUIDATE == "0x8246cc71ab01533b5bebc672a636df812f10637ad720797319d5741d5ebb3962"
+
+
+def test_lif_matches_morpho_cursor():
+    # 77% LLTV. inner = 1e18 - 0.3e18 * 0.23e18 / 1e18 = 0.931e18.
+    assert lif_wad(770000000000000000) == 10**36 // 931000000000000000
+    # 62.5% LLTV. inner = 1 - 0.3 * 0.375 = 0.8875.
+    assert lif_wad(625000000000000000) == 10**36 // 887500000000000000
+    # Low LLTV would exceed the 15% cap. 30% LLTV: 1 / (1 - 0.3 * 0.7) ≈ 1.266.
+    assert lif_wad(300000000000000000) == 115 * 10**16
+
+
+def test_paxg_interest_and_health_at_previous_block():
+    # Mainnet PAXG/PYUSD position at block 26255931, the block before liquidation
+    # 0x719b010be1dd7e963f8317193ae705420137a950ad5d972a1c1ac72ec4bb00cd.
+    # Debt matches the later Liquidate.repaidAssets within 1 unit. The position
+    # was still healthy, so the liquidation was a same-block race.
+    total_borrow = 147576381180
+    rate = 2009903267
+    elapsed = 45024
+    assert taylor_interest(total_borrow, rate, elapsed) == 13355364
+    borrowed = position_borrowed(
+        borrow_shares=16242768290127,
+        total_borrow_assets=total_borrow,
+        total_borrow_shares=131513886936450336,
+        rate_wad=rate,
+        elapsed=elapsed,
+    )
+    assert borrowed == 18228234
+    price = 3991147000000000000000000000
+    collateral = 5945921407081705
+    lltv = 770000000000000000
+    assert max_borrow_assets(collateral, price, lltv) == 18272905
+    assert is_unhealthy(borrowed, collateral, price, lltv) is False
+
+
+def test_bonus_is_none_without_a_price():
+    assert bonus_usd(100, 18, None, 50, 6, 1.0) is None
+    assert bonus_usd(2 * 10**18, 18, 10.0, 15 * 10**6, 6, 1.0) == 5.0
+
+
+def test_take_size_bad_debt_does_not_repay_the_whole_debt():
+    # Collateral quotes to 50, debt is 100, LIF is a bit over 1. Seize everything,
+    # repay only the quoted collateral divided by LIF.
+    collateral = 50 * 10**18
+    price = 10**36  # 1 collateral raw unit quotes as 1 loan raw unit, same decimals in this toy
+    borrowed = 100 * 10**18
+    lltv = 625000000000000000
+    take = take_size(collateral, borrowed, price, lltv)
+    assert take["bad_debt"] is True
+    assert take["seize"] == collateral
+    assert 0 < take["repay"] < borrowed
+
+
+def test_median_and_concentration():
+    assert median([]) is None
+    assert median([4, 0, 0]) == 0
+    assert median([1, 2, 3, 4]) == 2.5
+    report = concentration(
+        {"0xa": 12, "0xb": 3, "0xc": 1},
+        {"0xa": 100.0, "0xb": -5.0, "0xc": 1.0},
+    )
+    assert report["repeat_liquidators"] == 1
+    assert report["top"][0]["repeat"] is True
+    assert report["top1_count_share"] == 12 / 16
+    assert report["positive_bonus_usd"] == 101.0
+
+
+def test_slowly_captured_excludes_unknown_and_fast_races():
+    events = [
+        {"delay_blocks": 0, "bonus_usd": 50.0, "gas_usd": 1.0, "flash_fee_usd": 0.0},
+        {"delay_blocks": 8, "bonus_usd": 20.0, "gas_usd": 2.0, "flash_fee_usd": 0.0},
+        {"delay_blocks": None, "bonus_usd": 100.0, "gas_usd": 1.0, "flash_fee_usd": 0.0},
+        {"delay_blocks": 3, "delay_censored": True, "delay_blocks_at_least": 1000, "bonus_usd": 5.0, "gas_usd": 1.0, "flash_fee_usd": 0.0},
+        {"delay_blocks": 9, "bonus_usd": 4.0, "gas_usd": None, "flash_fee_usd": 0.0},
+    ]
+    # The censored row also has delay_blocks set; delay > N includes it once.
+    report = slowly_captured(events, 5)
+    assert report["unknown_delay"] == 1
+    assert report["not_slow_enough"] == 1
+    assert report["missing_gas_or_fee"] == 1
+    assert report["positive_net_events"] == 2
+    assert report["positive_net_before_slippage_usd"] == (20.0 - 2.0) + (5.0 - 1.0)
+
+
+def test_size_summary_buckets_match_median():
+    summary = size_summary([50, 100, 999.99, 1000, 1_000_000])
+    assert summary["n"] == 5
+    assert summary["average"] == (50 + 100 + 999.99 + 1000 + 1_000_000) / 5
+    assert summary["median"] == median([50, 100, 999.99, 1000, 1_000_000])
+    assert summary["median"] == quantile([50, 100, 999.99, 1000, 1_000_000], 0.5)
+    assert summary["distribution"] == {
+        "under_100": 1,
+        "100_to_1k": 2,
+        "1k_to_10k": 1,
+        "10k_to_100k": 0,
+        "100k_to_1m": 0,
+        "at_least_1m": 1,
+    }
+    assert size_summary([])["average"] is None
+    assert size_summary([])["median"] is None
+    assert quantile([1, 2, 3, 4], 0.5) == 2.5
+
+
+def test_loan_sizes_keep_every_row_and_split_markets():
+    market_a = "0x" + "aa" * 32
+    market_b = "0x" + "bb" * 32
+    events = [
+        {
+            "protocol": "morpho-blue",
+            "chain": "base",
+            "market_id": market_a,
+            "collateral_symbol": "AERO",
+            "loan_symbol": "USDC",
+            "tx": "0x1",
+            "block": 1,
+            "repaid_usd": 40.0,
+            "seized_usd": 42.0,
+            "bonus_source": "daily_morpho_price",
+        },
+        {
+            "protocol": "morpho-blue",
+            "chain": "base",
+            "market_id": market_a,
+            "collateral_symbol": "AERO",
+            "loan_symbol": "USDC",
+            "tx": "0x2",
+            "block": 2,
+            "repaid_usd": None,
+            "seized_usd": None,
+            "bonus_source": "daily_morpho_price",
+        },
+        {
+            "protocol": "euler-v2",
+            "chain": "mainnet",
+            "market_id": market_b,
+            "collateral_symbol": "WETH",
+            "loan_symbol": "USDC",
+            "tx": "0x3",
+            "block": 3,
+            "repaid_usd": 1500.0,
+            "seized_usd": 1600.0,
+            "bonus_source": "euler-api",
+        },
+    ]
+    positions = [
+        {
+            "kind": "underwater",
+            "chain": "mainnet",
+            "market_id": market_b,
+            "borrower": "0x" + "11" * 20,
+            "collateral_symbol": "WETH",
+            "loan_symbol": "USDC",
+            "health_factor": 0.9,
+            "borrow_usd": 80.0,
+            "collateral_usd": 70.0,
+        },
+        {
+            "kind": "near",
+            "chain": "mainnet",
+            "market_id": market_b,
+            "borrower": "0x" + "22" * 20,
+            "health_factor": 1.01,
+            "borrow_usd": 9_000.0,
+            "collateral_usd": 9_500.0,
+        },
+        {
+            "kind": "underwater",
+            "chain": "base",
+            "market_id": market_a,
+            "borrower": "0x" + "33" * 20,
+            "health_factor": 1.2,
+            "borrow_usd": 500.0,
+            "collateral_usd": 400.0,
+        },
+    ]
+    report = build_loan_sizes(events, positions)
+    observed = report["observed_liquidations"]
+    assert observed["n"] == 3
+    assert len(observed["records"]) == 3
+    assert observed["debt_priced"] == 2
+    assert observed["debt_unpriced"] == 1
+    assert observed["debt_usd"]["average"] == (40.0 + 1500.0) / 2
+    assert len(observed["by_market"]) == 2
+    aero = next(row for row in observed["by_market"] if row["collateral"] == "AERO")
+    assert aero["n"] == 2
+    assert aero["debt_usd"]["n"] == 1
+    assert aero["debt_usd"]["distribution"]["under_100"] == 1
+    assert aero["collateral_usd"]["average"] == 42.0
+    positions_out = report["liquidatable_positions"]
+    assert positions_out["n"] == 1
+    assert positions_out["records"][0]["debt_outstanding_usd"] == 80.0
+    assert positions_out["records"][0]["collateral_balance_usd"] == 70.0
+    assert report["liquidatable_debt_at_least_50"]["n"] == 1
+    assert report["liquidatable_debt_at_least_50"]["average"] == 80.0
+
+
+def test_headline_keeps_small_base_and_drops_head_and_unpriced():
+    assert overlooked_class("euler-v2", "arbitrum", "euler") == "euler-v2"
+    assert overlooked_class("morpho-blue", "base", "long_tail") == "morpho-base-small"
+    assert overlooked_class("morpho-blue", "base", "mid") == "morpho-base-small"
+    assert overlooked_class("morpho-blue", "base", "head") is None
+    assert overlooked_class("morpho-blue", "base", "supply_unknown") == "morpho-base-supply-unknown"
+    assert overlooked_class("morpho-blue", "mainnet", "long_tail") is None
+    assert overlooked_class("morpho-blue", "arbitrum", "head") == "morpho-arbitrum-isolated"
+    assert overlooked_class("moonwell", "base", None) == "moonwell"
+    assert overlooked_class("silo", "arbitrum", None) == "silo"
+    assert headline_debt(5000) is True
+    assert headline_debt(4999.99) is False
+    assert headline_debt(None) is False
+    net, missing = net_after_costs(120.0, 100.0, 1.5, 0.0)
+    assert net == 18.5
+    assert missing == []
+    net, missing = net_after_costs(None, 100.0, 1.0, 0.0)
+    assert net is None
+    assert missing == ["slippage_quote"]
+    counts = liquidator_counts([
+        {"protocol": "euler-v2", "chain": "mainnet", "market_id": "0xabc", "liquidator": "0xAA", "collateral_symbol": "WETH", "loan_symbol": "USDC"},
+        {"protocol": "euler-v2", "chain": "mainnet", "market_id": "0xabc", "liquidator": "0xaa", "collateral_symbol": "WETH", "loan_symbol": "USDC"},
+        {"protocol": "euler-v2", "chain": "mainnet", "market_id": "0xabc", "liquidator": "0xBB", "collateral_symbol": "WETH", "loan_symbol": "USDC"},
+    ])
+    row = counts[("euler-v2", "mainnet", "0xabc")]
+    assert row["distinct_liquidators"] == 2
+    assert row["liquidations"] == 3

@@ -81,11 +81,18 @@ class Rpc:
         raw = self.request("eth_call", [{"to": to, "data": data}, blk])
         return bytes.fromhex(raw[2:]) if raw and raw != "0x" else b""
 
-    def get_logs(self, address: list[str], topics: list[Any], start: int, end: int) -> list[dict[str, Any]]:
-        params = [{
+    def get_logs(
+        self,
+        address: list[str] | None,
+        topics: list[Any],
+        start: int,
+        end: int,
+    ) -> list[dict[str, Any]]:
+        filt: dict[str, Any] = {
             "fromBlock": hex(start),
             "toBlock": hex(end),
-            "address": address,
             "topics": topics,
-        }]
-        return self.request("eth_getLogs", params)
+        }
+        if address:
+            filt["address"] = address
+        return self.request("eth_getLogs", [filt])
