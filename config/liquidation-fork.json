@@ -1,0 +1,29 @@
+{
+  "chain": "base",
+  "rpc_env": "BASE_RPC_URL",
+  "tx": "0x26fc826ded7f7ba937b65b770bfb015cfa11ec5b79c26d461fbca1c59686d4d9",
+  "block": 52987569,
+  "morpho": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+  "borrower": "0xF2829fC923b6fD040Ead55d3F973F2953e86D13e",
+  "loan_token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "loan_symbol": "USDC",
+  "collateral_token": "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+  "collateral_symbol": "AERO",
+  "oracle": "0x96f1485daf396c2ab7e53dc76d7b330143cb2269",
+  "irm": "0x46415998764c29ab2a25cbea6254146d50d22687",
+  "lltv": 625000000000000000,
+  "market_id": "0xdaa04f6819210b11fe4e3b65300c725c32e55755e3598671559b9ae3bac453d7",
+  "swap_pool": "0x6cDcB1C4A4d1C3C6d054b27AC5B77e89eAFb971d",
+  "swap_pool_kind": "aerodrome_volatile",
+  "flash_assets": 200000000,
+  "precheck": {
+    "block": 52987568,
+    "borrowed_loan_assets": 94194651,
+    "max_borrow_loan_assets": 94385616,
+    "healthy_at_previous_block": true,
+    "morpho_usdc_balance": "243522365.215927",
+    "quoted_usdc_out_for_event_seized_aero": "106.088688",
+    "event_repaid_usdc": "94.194652",
+    "note": "Health at the previous block was reconstructed from oracle.price, position, market, and borrowRateView. The position was still healthy by about 0.19 USDC, so the fork is the liquidation transaction itself, after earlier transactions in that block. The Aerodrome quote is getAmountOut at block 52987568 for the seized amount in the event, not a filled trade."
+  }
+}

@@ -69,6 +69,7 @@ GitHub Codespaces uses `.devcontainer`. The image installs Foundry and, on creat
 make test          # forge unit tests + pytest. No RPC, no broadcast.
 make test-fork     # pinned forks. Skips a chain when the node no longer has that block.
 make analyze       # read-only competition scan. Writes analysis/latest.json.
+make liquidations  # read-only liquidation study. Writes analysis/liquidations.json.
 make anvil-demo    # local fork only. Submits to 127.0.0.1.
 ```
 
@@ -131,14 +132,94 @@ Unit tests do not need a node. Fork tests fork the pinned block, dump WETH into 
 
 The Balancer rows are smaller because the test stops at the first size that works, not because the zero premium made the trade worse. These are manufactured prices on a fork. They show the executor repays and keeps a surplus. They are not the historical result above.
 
+## Flash-loan liquidations
+
+Same rules as the arb scan. Nothing in this path broadcasts. Morpho and Euler numbers below are from their public APIs for 25 July 2026 17:59 UTC through 23 October 2026 17:59 UTC. Delay, gas, and the open-book quotes are archive `eth_call`s and receipts. Where a field could not be read, it is left out of the sum.
+
+### What was liquidated
+
+| Source | Events | Priced | Positive paper bonus USD | Window |
+| --- | ---: | ---: | ---: | --- |
+| Morpho Blue, mainnet + Base | 4406 | 4080 | 1,351,043.21 | 90 days |
+| Euler v2, mainnet + Base + Arbitrum | 99 | 99 | 506.12 | 90 days |
+| Moonwell, Base | 142 | 132 repaid, bonus not priced | repaid 315.80, bonus unknown | 2 days, blocks 52908363–52994763 |
+| Seamless, Base | 0 |  |  | same 2 days, scan completed |
+| Fluid Vault T1 liquidator on Base `0x8f5455245e74a2ea60a32751654a57b1aae4be99` | 0 logs |  |  | 14 days, blocks 52389963–52994763 |
+| Silo, one Arbitrum contract `0x20deb7395f88a18af2eb51a0c3053f15c1781933` | 0 |  |  | 2 days, blocks 516917727–517608927 |
+
+Morpho’s paper bonus is seized collateral times that day’s Morpho USD price, minus repaid debt at the loan token’s daily price. It is not cash. The median positive Morpho bonus is $5.06. Nineteen events over $10,000, all on mainnet, are $1,174,891 of the $1,351,043. The largest is PT-reUSD-10DEC2026 / USDC in block 25829882: the daily mark says $346,905.66 of bonus on a $13.01 million repay. The oracle price in that block says the bonus was 340,440.82 USDC. Those two marks agree within about two percent, so the size is not a decimal bug. Selling thirteen million dollars of that principal token was not quoted. 326 Morpho events have no daily price. 267 of those are Base AFAKE.
+
+Euler’s $506.12 is `bonusUsd` from `https://v3.euler.finance/v3/liquidations`, valued from their historical price snapshots.
+
+Moonwell is every `LiquidateBorrow` on the 21 markets `getAllMarkets` returned, one market per request. The repaid USD uses the underlying token and the Morpho price when one exists. `seizeTokens` is an mToken amount, so the bonus is unknown. One address, `0x16e41af5e034113802d06064fbeb020cc3d47b19`, sent 130 of the 142. Seamless, Fluid, and that Silo contract were scanned cleanly and were empty in those short windows. That is not a 90-day claim, and it is not a claim about every Silo or every Fluid vault.
+
+### Delay
+
+Delay is the number of blocks from the first end-of-block state that was already liquidatable to the liquidation block. A position that was healthy at the end of the previous block has delay 0: it became liquidatable in the liquidation block, which an end-of-block call cannot see inside. Morpho health uses `oracle.price`, Taylor-compounded interest, and virtual shares. Euler uses `vault.checkLiquidation`. The lookback stops at 7 days. Past that, the row is censored, not given a fake precise delay.
+
+Morpho delay was measured on 72 events, not on 4,406. The sample is up to 18 events per chain with a daily-mark bonus of at least $100, plus a seeded random fill to 36. Euler is every event in the 90 days.
+
+| Set | Sample | Readable delay | Delay 0 | Median blocks | Median seconds | Censored at 7 days | Unreadable |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Morpho Blue | 72 | 58 | 47 | 0 | 0 | 8 | 6 |
+| Euler v2 | 99 | 63 | 3 | 339 | 1,908 | 26 | 10 |
+
+Of the positive paper bonus inside the Morpho sample, $1,056,411 was delay 0. $2,108 had a readable delay above 5 blocks. The money in that sample was taken in the block it opened.
+
+Euler’s 339-block median is only the 63 readable rows. Twenty-six more were still liquidatable a week earlier, so the true Euler median is longer. The whole Euler paper bonus for the quarter is $506.12.
+
+Gas is the winner’s receipt: `gasUsed * effectiveGasPrice`, plus Base `l1Fee` when the receipt has it, times the ETH price on that day. Median gas used is high because those transactions include the winner’s route, not a bare liquidate.
+
+| Chain | Receipts in the sample | Median gas used | Median gas USD |
+| --- | ---: | ---: | ---: |
+| mainnet | 92 | 727,366.5 | 0.194 |
+| base | 73 | 962,956 | 0.018 |
+| arbitrum | 6 | 950,864 | 0.036 |
+
+### Who got them
+
+4,505 Morpho and Euler liquidations, 384 liquidators. An address with at least 10 liquidations in the window is marked as a repeat liquidator. There are 81 of those. The busiest five did 31.1% of the count and 0.107% of the positive paper USD. The count leaderboard is the small, repeated Base flow. The USD is 19 mainnet events, done by seven addresses. `0x51a453d677396F62fbb1dff9925a205fa96fAB5e` did 8 of those 19.
+
+A searcher who arrives N blocks after the winner of a finished liquidation is late. Profit after the winner is $0 in this study. Remainders were not reconstructed.
+
+The other figure is a searcher who is N blocks slower than the moment the position opens, and the winner was slower than that. On the delay sample, with a zero flash fee only when Morpho or Balancer’s latest balance covers the repay, and with no slippage subtracted:
+
+| Slower than the open by | Rows with positive net before slippage | That net, USD | Of which is bad-debt marks |
+| --- | ---: | ---: | ---: |
+| 1 block | 59 | 53,366.01 | 31,744.48 |
+| 5 blocks | 56 | 34,020.29 | 31,744.48 |
+
+The bad-debt slice is mostly sNUSD / USDC positions that were still liquidatable seven days later. That paper bonus was not a race that a faster bot won. It was collateral the market did not clear. The one large non-bad-debt row a 1-block delay still reaches is PT-reUSD / USDC with delay 2 and $19,335.18 before slippage, on about $734k of collateral. A 5-block delay misses it. After that, the sitting non-bad-debt marks are small: stkWELL on Base sat 7,458 blocks (about 4.1 hours) for a $1,710.70 daily-mark bonus, and ynRWAx sat 21,232 blocks for $396.85. Neither exit was quoted.
+
+### What is sitting there now
+
+Morpho’s indexer currently reports 1,758 mainnet positions and 191 Base positions with health factor at or under 1, and 611 positions with health factor from 1 to 1.02. Health factor here is collateral value times LLTV, divided by debt. 1,435 of the underwater rows are under $20 of debt. 38 print more than $2 million of debt. 290 between $50 and $2 million have collateral marks under 30% of the debt. Those are bad debt or a broken USD mark. They were not treated as size.
+
+Forty-seven underwater positions have debt between $50 and $2 million and collateral marks of at least 30% of the debt. The 18 largest were read on chain. All 18 were unhealthy on chain. Fourteen are ynETHx / msETH and have no Uniswap v2, Uniswap v3, or Solidly pool between the two tokens in the configured factories. USDC / LCAP on Base had no loan-token price, so no net. Three wbCOIN / USDC positions on Base are bad debt: Aerodrome’s `getAmountOut` on the seized collateral returned 4,478 raw USDC units, about $0.0045, against repays of $366 to $422. Flash fee was zero. Gas, using the sample’s median gas and the current base fee, was about $0.038. Net was about -$366 to -$419.
+
+There is no fifth realistic opportunity, and there is no first. Near-threshold positions are not liquidatable. The closest large one is USDe / DAI on mainnet, health factor 1.00008, $116,126 of debt.
+
+Euler’s open-book check covered 48 debtors on 12 vaults whose total borrows were at least $10,000, not the whole book. Nine vault rows on four sub-accounts came back liquidatable. Three of those addresses differ only in the last nibble and sit on one vault, with liquidation collateral at 0.808 and 0.834 of liquidation liability, from a snapshot 5,708 seconds old. The fourth account has two zero-collateral rows and one row at 0.933, from a snapshot 832 seconds old. Liabilities are Euler’s unit of account, not dollars. No swap was quoted, so none of that is counted as profit.
+
+### Fork
+
+`test/fork/LiquidationFork.t.sol` forks Base transaction `0x26fc826ded7f7ba937b65b770bfb015cfa11ec5b79c26d461fbca1c59686d4d9` (AERO / USDC, block 52987569) before that transaction, flash-borrows 200 USDC from Morpho Blue at zero fee, repays the borrower’s full borrow shares, and sells the seized AERO on Aerodrome volatile pool `0x6cDcB1C4A4d1C3C6d054b27AC5B77e89eAFb971d`. On `https://base.gateway.tenderly.co` the contract kept 11,894,036 USDC units, which is $11.894036, before gas. At the previous block the same position was still healthy: borrowed 94,194,651 against a max of 94,385,616. A bot one block slower than this liquidation gets none of the $11.89. A drpc replay of the same fork was rate-limited and produced no second number.
+
+### Verdict
+
+This is not worth running as a speed game. On the Morpho sample that contains the paper bonus, the median delay is 0 blocks and about $1.06 million of that sample’s positive marks were already gone by the next block. What sits longer is bad debt, a token with no pool, or a few hundred to a couple of thousand dollars of daily-mark bonus that was not shown to survive a swap. Euler’s entire 90-day paper bonus is $506.12. The smaller lenders were either empty in the short log window or, on Moonwell, already worked by one address for a few hundred dollars of repaid debt over two days. The fork shows the mechanic works and that the winner’s slot on that AERO position paid $11.89 before gas.
+
 ## Layout
 
 - `src/FlashLoanArbExecutor.sol` — borrow, swap, repay, `minProfit`
+- `src/FlashLoanLiquidator.sol` — Morpho or Balancer flash loan, Morpho Blue liquidate, Solidly swap
 - `src/libraries/V2Math.sol`, `SafeTransfer.sol` — constant-product math and transfers that bubble the inner revert
-- `test/` — unit tests and mocks. `test/fork/Fork.t.sol` — pinned forks
-- `bot/flasharb/` — quotes, sizing, competition accounting, private submitter, read-only scan
+- `test/` — unit tests and mocks. `test/fork/Fork.t.sol` — pinned arb forks. `test/fork/LiquidationFork.t.sol` — one historical liquidation
+- `bot/flasharb/` — quotes, sizing, competition accounting, liquidation study, private submitter
 - `config/chains/` — tokens, factories, TVL bands, gas units
-- `analysis/latest.json` — the table above
+- `config/liquidation-fork.json` — the AERO liquidation the fork test replays
+- `analysis/latest.json` — the arb table above
+- `analysis/liquidations.json` — the liquidation study
 
 ## What I learned
 
